@@ -36,8 +36,8 @@ class AuthViewModel(private val dataStoreManager: DataStoreManager) : ViewModel(
 
                 if (response.isSuccessful) {
                     val body = response.body()
-                    if (body != null && !body.error) {
-                        val token = body.token
+                    if (body != null && !body.error!!) {
+                        val token = body.loginResult?.token
                         if (!token.isNullOrEmpty()) {
                             dataStoreManager.saveToken(token)
                             _isLoggedIn.value = true

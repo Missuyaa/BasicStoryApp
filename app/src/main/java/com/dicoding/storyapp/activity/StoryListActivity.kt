@@ -2,6 +2,7 @@ package com.dicoding.storyapp.activity
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.Toast
@@ -78,6 +79,7 @@ class StoryListActivity : AppCompatActivity() {
                     if (storyResponse != null && !storyResponse.error) {
                         callback(storyResponse.listStory)
                     } else {
+                        Log.e("StoryListActivity", "Gagal memuat cerita: ${storyResponse?.message}")
                         Toast.makeText(
                             this@StoryListActivity,
                             storyResponse?.message ?: "Gagal memuat cerita",
@@ -85,6 +87,7 @@ class StoryListActivity : AppCompatActivity() {
                         ).show()
                     }
                 } else {
+                    Log.e("StoryListActivity", "Error: ${response.message()}")
                     Toast.makeText(
                         this@StoryListActivity,
                         "Error: ${response.message()}",
@@ -92,6 +95,7 @@ class StoryListActivity : AppCompatActivity() {
                     ).show()
                 }
             } catch (e: Exception) {
+                Log.e("StoryListActivity", "Error: ${e.message}")
                 Toast.makeText(this@StoryListActivity, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
             }
         }

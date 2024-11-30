@@ -52,7 +52,7 @@ fun StoryListScreen(
             if (token.isNullOrEmpty()) {
                 Text("Token tidak ditemukan. Harap login ulang.", color = MaterialTheme.colorScheme.error)
             } else {
-                Text("Token ditemukan: $token")
+//                Text("Token ditemukan: $token")
                 // Tambahkan UI untuk menampilkan daftar cerita
             }
         }

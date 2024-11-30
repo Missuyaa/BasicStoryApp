@@ -11,7 +11,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.dicoding.storyapp.R
 import com.dicoding.storyapp.api.ApiService
-import com.dicoding.storyapp.model.LoginResponse
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -42,8 +41,8 @@ class LoginActivity : AppCompatActivity() {
                 if (response.isSuccessful) { // Periksa status HTTP respons
                     val loginResponse = response.body() // Ambil body respons
                     withContext(Dispatchers.Main) {
-                        if (loginResponse != null && !loginResponse.error) {
-                            saveSession(loginResponse.token) // Simpan token ke SharedPreferences
+                        if (loginResponse != null && !loginResponse.error!!) {
+                            saveSession(loginResponse.loginResult?.token) // Simpan token ke SharedPreferences
                             Toast.makeText(this@LoginActivity, "Login berhasil!", Toast.LENGTH_SHORT).show()
                             Log.d("LoginActivity", "Navigasi ke MainActivity dimulai")
                             startActivity(Intent(this@LoginActivity, MainActivity::class.java))
@@ -75,10 +74,13 @@ class LoginActivity : AppCompatActivity() {
     }
 
     // Fungsi untuk menyimpan token login ke SharedPreferences
-    private fun saveSession(token: String?) {
-        val sharedPreferences = getSharedPreferences("StoryAppPrefs", MODE_PRIVATE)
-        sharedPreferences.edit().putString("token", token).apply()
-    }
+private fun saveSession(token: String?) {
+    val sharedPreferences = getSharedPreferences("StoryAppPrefs", MODE_PRIVATE)
+    sharedPreferences.edit().putString("token", token).apply()
+    // Tambahkan log dan pesan toast untuk memastikan token disimpan
+    Log.d("LoginActivity", "Token disimpan: $token")
+    Toast.makeText(this, "Token disimpan: $token", Toast.LENGTH_SHORT).show()
+}
 
     // Fungsi untuk menginisialisasi elemen UI dan mendefinisikan interaksi pengguna
     override fun onCreate(savedInstanceState: Bundle?) {
