@@ -2,6 +2,7 @@ package com.dicoding.storyapp.activity
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
@@ -19,11 +20,13 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 class LoginActivity : AppCompatActivity() {
 
+    // Fungsi login untuk memproses autentikasi pengguna
     private fun login(email: String, password: String) {
         val retrofit = Retrofit.Builder()
-            .baseUrl("https://story-api.dicoding.dev/v1/") // Base URL yang diperbarui
+            .baseUrl("https://story-api.dicoding.dev/v1/")
             .addConverterFactory(GsonConverterFactory.create())
             .build()
+
         val apiService = retrofit.create(ApiService::class.java)
 
         val credentials = mapOf(
@@ -31,33 +34,53 @@ class LoginActivity : AppCompatActivity() {
             "password" to password
         )
 
-        // Gunakan coroutine untuk memanggil suspend function
         lifecycleScope.launch(Dispatchers.IO) {
             try {
-                val response: LoginResponse = apiService.login(credentials)
-                withContext(Dispatchers.Main) {
-                    if (!response.error) {
-                        saveSession(response.token)
-                        Toast.makeText(this@LoginActivity, "Login berhasil!", Toast.LENGTH_SHORT).show()
-                        startActivity(Intent(this@LoginActivity, StoryListActivity::class.java))
-                        finish()
-                    } else {
-                        Toast.makeText(this@LoginActivity, response.message, Toast.LENGTH_SHORT).show()
+                // Panggil API menggunakan Retrofit
+                val response = apiService.login(credentials)
+
+                if (response.isSuccessful) { // Periksa status HTTP respons
+                    val loginResponse = response.body() // Ambil body respons
+                    withContext(Dispatchers.Main) {
+                        if (loginResponse != null && !loginResponse.error) {
+                            saveSession(loginResponse.token) // Simpan token ke SharedPreferences
+                            Toast.makeText(this@LoginActivity, "Login berhasil!", Toast.LENGTH_SHORT).show()
+                            Log.d("LoginActivity", "Navigasi ke MainActivity dimulai")
+                            startActivity(Intent(this@LoginActivity, MainActivity::class.java))
+                            finish()
+                        } else {
+                            Toast.makeText(
+                                this@LoginActivity,
+                                loginResponse?.message ?: "Login gagal.",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    }
+                } else {
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(
+                            this@LoginActivity,
+                            "Error: ${response.message()}",
+                            Toast.LENGTH_SHORT
+                        ).show()
                     }
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
+                    Log.e("API_ERROR", e.message ?: "Unknown error")
                     Toast.makeText(this@LoginActivity, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
                 }
             }
         }
     }
 
+    // Fungsi untuk menyimpan token login ke SharedPreferences
     private fun saveSession(token: String?) {
         val sharedPreferences = getSharedPreferences("StoryAppPrefs", MODE_PRIVATE)
         sharedPreferences.edit().putString("token", token).apply()
     }
 
+    // Fungsi untuk menginisialisasi elemen UI dan mendefinisikan interaksi pengguna
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
@@ -67,6 +90,7 @@ class LoginActivity : AppCompatActivity() {
         val loginButton = findViewById<Button>(R.id.btn_login)
         val registerTextView = findViewById<TextView>(R.id.tv_register)
 
+        // Klik tombol login
         loginButton.setOnClickListener {
             val email = emailEditText.text.toString().trim()
             val password = passwordEditText.text.toString().trim()
@@ -76,12 +100,13 @@ class LoginActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            login(email, password)
+            login(email, password) // Panggil fungsi login
         }
 
-        // Navigasi ke halaman registrasi
+        // Klik teks untuk navigasi ke halaman register
         registerTextView.setOnClickListener {
-            startActivity(Intent(this, RegisterActivity::class.java))
+            val intent = Intent(this, RegisterActivity::class.java)
+            startActivity(intent)
         }
     }
 }

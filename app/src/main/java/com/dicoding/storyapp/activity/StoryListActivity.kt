@@ -65,7 +65,7 @@ class StoryListActivity : AppCompatActivity() {
 
     private fun fetchStories(token: String, callback: (List<Story>) -> Unit) {
         val retrofit = Retrofit.Builder()
-            .baseUrl("https://story-api.dicoding.dev/v1/") // Ganti dengan URL API Anda
+            .baseUrl("https://story-api.dicoding.dev/v1/")
             .addConverterFactory(GsonConverterFactory.create())
             .build()
         val apiService = retrofit.create(ApiService::class.java)

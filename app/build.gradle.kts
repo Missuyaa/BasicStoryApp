@@ -63,8 +63,6 @@ dependencies {
     implementation ("androidx.constraintlayout:constraintlayout:2.1.4")
     implementation ("androidx.navigation:navigation-compose:2.7.0")
     implementation ("com.google.code.gson:gson:2.10.1")
-
-
     implementation("androidx.datastore:datastore-preferences:1.0.0")
     implementation("io.coil-kt:coil-compose:2.3.0")
     implementation("androidx.camera:camera-core:1.2.3")
@@ -74,7 +72,6 @@ dependencies {
     implementation("com.google.accompanist:accompanist-permissions:0.30.1")
     implementation("androidx.compose.animation:animation:1.6.0")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.2")
-
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

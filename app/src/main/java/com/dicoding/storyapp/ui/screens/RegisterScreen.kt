@@ -10,17 +10,19 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.dicoding.storyapp.viewmodel.AuthViewModel
 
-
 @Composable
-fun LoginScreen(
+fun RegisterScreen(
     navController: NavHostController,
     authViewModel: AuthViewModel
 ) {
+    // State untuk input nama, email, dan password
+    var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
 
-    val errorMessage = authViewModel.errorMessage.collectAsState().value
-    val isLoading = authViewModel.isLoading.collectAsState().value
+    // Observasi state dari ViewModel
+    val isLoading by authViewModel.isLoading.collectAsState()
+    val errorMessage: String? by authViewModel.errorMessage.collectAsState()
 
     Column(
         modifier = Modifier
@@ -29,68 +31,90 @@ fun LoginScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
+        // Judul Register
         Text(
-            text = "Login",
+            text = "Register",
             style = MaterialTheme.typography.headlineSmall,
             modifier = Modifier.padding(bottom = 16.dp)
         )
 
+        // Input Nama
+        TextField(
+            value = name,
+            onValueChange = { name = it },
+            label = { Text("Nama") },
+            modifier = Modifier.fillMaxWidth(),
+            isError = name.isBlank() && !isLoading
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Input Email
         TextField(
             value = email,
             onValueChange = { email = it },
             label = { Text("Email") },
             modifier = Modifier.fillMaxWidth(),
-            isError = email.isEmpty() && !isLoading
+            isError = email.isBlank() && !isLoading
         )
-
         Spacer(modifier = Modifier.height(8.dp))
 
+        // Input Password
         TextField(
             value = password,
             onValueChange = { password = it },
             label = { Text("Password") },
             visualTransformation = PasswordVisualTransformation(),
             modifier = Modifier.fillMaxWidth(),
-            isError = password.isEmpty() && !isLoading
+            isError = password.isBlank() && !isLoading
         )
-
         Spacer(modifier = Modifier.height(16.dp))
 
+        // Tombol Register
         Button(
             onClick = {
-                authViewModel.login(email, password) { isSuccess ->
+                authViewModel.register(name, email, password) { isSuccess ->
                     if (isSuccess) {
-                        navController.navigate("story_list") {
-                            popUpTo("login") { inclusive = true }
+                        navController.navigate("login") {
+                            popUpTo("register") { inclusive = true }
                         }
                     }
                 }
             },
             modifier = Modifier.fillMaxWidth(),
-            enabled = !isLoading
+            enabled = name.isNotBlank() && email.isNotBlank() && password.isNotBlank() && !isLoading
         ) {
-            Text("Login")
+            if (isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(24.dp),
+                    strokeWidth = 2.dp,
+                    color = MaterialTheme.colorScheme.onPrimary
+                )
+            } else {
+                Text("Register")
+            }
         }
-
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        if (!errorMessage.isNullOrEmpty()) {
+        // Pesan Error
+        errorMessage?.let {
             Text(
-                text = errorMessage,
+                text = it, // Tampilkan error message jika tidak null
                 color = MaterialTheme.colorScheme.error,
                 modifier = Modifier.padding(top = 8.dp),
                 style = MaterialTheme.typography.bodySmall
             )
         }
 
-
         Spacer(modifier = Modifier.height(16.dp))
 
+        // Navigasi kembali ke Login
         TextButton(onClick = {
-            navController.navigate("register")
+            navController.navigate("login") {
+                popUpTo("register") { inclusive = true }
+            }
         }) {
-            Text("Don't have an account? Register")
+            Text("Already have an account? Login")
         }
     }
 }

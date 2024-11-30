@@ -27,26 +27,64 @@ class AuthViewModel(private val dataStoreManager: DataStoreManager) : ViewModel(
         }
     }
 
-    private fun checkLoginStatus() {
+    fun login(email: String, password: String, onResult: (Boolean) -> Unit) {
         viewModelScope.launch {
-            dataStoreManager.getToken().collect { token ->
-                _isLoggedIn.value = !token.isNullOrEmpty()
+            _isLoading.value = true
+            try {
+                val credentials = mapOf("email" to email, "password" to password)
+                val response = ApiClient.apiService.login(credentials)
+
+                if (response.isSuccessful) {
+                    val body = response.body()
+                    if (body != null && !body.error) {
+                        val token = body.token
+                        if (!token.isNullOrEmpty()) {
+                            dataStoreManager.saveToken(token)
+                            _isLoggedIn.value = true
+                            onResult(true)
+                        } else {
+                            _errorMessage.value = "Token tidak valid."
+                            onResult(false)
+                        }
+                    } else {
+                        _errorMessage.value = body?.message ?: "Gagal login."
+                        onResult(false)
+                    }
+                } else {
+                    _errorMessage.value = "Error: ${response.message()}"
+                    onResult(false)
+                }
+            } catch (e: Exception) {
+                _errorMessage.value = "Error: ${e.message}"
+                onResult(false)
+            } finally {
+                _isLoading.value = false
             }
         }
     }
 
-    fun login(email: String, password: String, onResult: (Boolean) -> Unit) {
+    fun register(name: String, email: String, password: String, onResult: (Boolean) -> Unit) {
         viewModelScope.launch {
             _isLoading.value = true
             _errorMessage.value = null
             try {
-                val credentials = mapOf("email" to email, "password" to password)
-                val response = ApiClient.apiService.login(credentials)
-                if (!response.error) {
-                    dataStoreManager.saveToken(response.token)
-                    onResult(true)
+                val credentials = mapOf(
+                    "name" to name,
+                    "email" to email,
+                    "password" to password
+                )
+                val response = ApiClient.apiService.register(credentials)
+
+                if (response.isSuccessful) {
+                    val body = response.body()
+                    if (body != null && !body.error) {
+                        onResult(true)
+                    } else {
+                        _errorMessage.value = body?.message ?: "Gagal registrasi."
+                        onResult(false)
+                    }
                 } else {
-                    _errorMessage.value = response.message
+                    _errorMessage.value = "Error: ${response.message()}"
                     onResult(false)
                 }
             } catch (e: Exception) {
@@ -65,3 +103,4 @@ class AuthViewModel(private val dataStoreManager: DataStoreManager) : ViewModel(
         }
     }
 }
+
