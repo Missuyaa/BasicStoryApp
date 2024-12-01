@@ -10,19 +10,18 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.dicoding.storyapp.viewmodel.AuthViewModel
 
+
 @Composable
 fun RegisterScreen(
-    navController: NavHostController,
+    onRegisterSuccess: () -> Unit, // Callback jika registrasi berhasil
     authViewModel: AuthViewModel
 ) {
-    // State untuk input nama, email, dan password
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
 
-    // Observasi state dari ViewModel
     val isLoading by authViewModel.isLoading.collectAsState()
-    val errorMessage: String? by authViewModel.errorMessage.collectAsState()
+    val errorMessage by authViewModel.errorMessage.collectAsState()
 
     Column(
         modifier = Modifier
@@ -31,90 +30,68 @@ fun RegisterScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        // Judul Register
         Text(
             text = "Register",
             style = MaterialTheme.typography.headlineSmall,
             modifier = Modifier.padding(bottom = 16.dp)
         )
 
-        // Input Nama
         TextField(
             value = name,
             onValueChange = { name = it },
-            label = { Text("Nama") },
+            label = { Text("Name") },
             modifier = Modifier.fillMaxWidth(),
-            isError = name.isBlank() && !isLoading
+            isError = name.isEmpty() && !isLoading
         )
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Input Email
         TextField(
             value = email,
             onValueChange = { email = it },
             label = { Text("Email") },
             modifier = Modifier.fillMaxWidth(),
-            isError = email.isBlank() && !isLoading
+            isError = email.isEmpty() && !isLoading
         )
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Input Password
         TextField(
             value = password,
             onValueChange = { password = it },
             label = { Text("Password") },
             visualTransformation = PasswordVisualTransformation(),
             modifier = Modifier.fillMaxWidth(),
-            isError = password.isBlank() && !isLoading
+            isError = password.isEmpty() && !isLoading
         )
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Tombol Register
         Button(
             onClick = {
                 authViewModel.register(name, email, password) { isSuccess ->
                     if (isSuccess) {
-                        navController.navigate("login") {
-                            popUpTo("register") { inclusive = true }
-                        }
+                        onRegisterSuccess()
                     }
                 }
             },
             modifier = Modifier.fillMaxWidth(),
-            enabled = name.isNotBlank() && email.isNotBlank() && password.isNotBlank() && !isLoading
+            enabled = name.isNotEmpty() && email.isNotEmpty() && password.isNotEmpty() && !isLoading
         ) {
             if (isLoading) {
                 CircularProgressIndicator(
                     modifier = Modifier.size(24.dp),
-                    strokeWidth = 2.dp,
-                    color = MaterialTheme.colorScheme.onPrimary
+                    strokeWidth = 2.dp
                 )
             } else {
                 Text("Register")
             }
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // Pesan Error
         errorMessage?.let {
             Text(
-                text = it, // Tampilkan error message jika tidak null
+                text = it,
                 color = MaterialTheme.colorScheme.error,
-                modifier = Modifier.padding(top = 8.dp),
-                style = MaterialTheme.typography.bodySmall
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(top = 8.dp)
             )
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Navigasi kembali ke Login
-        TextButton(onClick = {
-            navController.navigate("login") {
-                popUpTo("register") { inclusive = true }
-            }
-        }) {
-            Text("Already have an account? Login")
         }
     }
 }

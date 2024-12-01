@@ -42,19 +42,48 @@ fun StoryApp(authViewModel: AuthViewModel, storyViewModel: StoryViewModel) {
             navController = navController,
             startDestination = if (isLoggedIn) "story_list" else "login"
         ) {
+            // Perbaikan LoginScreen
             composable("login") {
-                LoginScreen(navController, authViewModel)
-            }
-            composable("register") {
-                RegisterScreen(navController, authViewModel)
+                LoginScreen(
+                    onLoginSuccess = {
+                        navController.navigate("story_list") {
+                            popUpTo("login") { inclusive = true }
+                        }
+                    },
+                    onRegisterClick = {
+                        navController.navigate("register")
+                    },
+                    authViewModel = authViewModel
+                )
             }
 
-            composable("story_list") {
-                StoryListScreen(navController, storyViewModel, authViewModel)
+            // RegisterScreen
+            composable("register") {
+                RegisterScreen(
+                    onRegisterSuccess = {
+                        navController.navigate("login") {
+                            popUpTo("register") { inclusive = true }
+                        }
+                    },
+                    authViewModel = authViewModel
+                )
             }
+
+            // StoryListScreen
+            composable("story_list") {
+                StoryListScreen(
+                    navController = navController,
+                    storyViewModel = storyViewModel,
+                    authViewModel = authViewModel
+                )
+            }
+
+            // AddStoryScreen
             composable("add_story") {
                 AddStoryScreen(navController)
             }
+
+            // StoryDetailScreen
             composable("story_detail/{storyId}") { backStackEntry ->
                 val storyId = backStackEntry.arguments?.getString("storyId") ?: ""
                 StoryDetailScreen(navController, storyId, storyViewModel)

@@ -4,13 +4,13 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.dicoding.storyapp.viewmodel.AuthViewModel
 import com.dicoding.storyapp.viewmodel.StoryViewModel
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -20,14 +20,14 @@ fun StoryListScreen(
     authViewModel: AuthViewModel
 ) {
     // Observasi token menggunakan collectAsState
-    val tokenState = storyViewModel.token.collectAsState()
-    val token = tokenState.value
+    val token by storyViewModel.token.collectAsState(initial = null)
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Daftar Cerita") },
                 actions = {
+                    // Tombol logout
                     Button(
                         onClick = {
                             authViewModel.logout()
@@ -50,10 +50,15 @@ fun StoryListScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             if (token.isNullOrEmpty()) {
-                Text("Token tidak ditemukan. Harap login ulang.", color = MaterialTheme.colorScheme.error)
+                // Tampilkan pesan jika token tidak ditemukan
+                Text(
+                    text = "Token tidak ditemukan. Harap login ulang.",
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodyLarge
+                )
             } else {
-//                Text("Token ditemukan: $token")
-                // Tambahkan UI untuk menampilkan daftar cerita
+                // Tampilkan UI daftar cerita di sini
+                Text(text = "Token ditemukan: $token")
             }
         }
     }

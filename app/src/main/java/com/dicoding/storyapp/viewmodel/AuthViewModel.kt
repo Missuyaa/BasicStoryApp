@@ -1,5 +1,6 @@
 package com.dicoding.storyapp.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dicoding.storyapp.api.ApiClient
@@ -31,31 +32,27 @@ class AuthViewModel(private val dataStoreManager: DataStoreManager) : ViewModel(
         viewModelScope.launch {
             _isLoading.value = true
             try {
-                val credentials = mapOf("email" to email, "password" to password)
-                val response = ApiClient.apiService.login(credentials)
+                val response = ApiClient.apiService.login(mapOf("email" to email, "password" to password))
+                Log.d("AuthViewModel", "Login request: email=$email, password=$password")
 
                 if (response.isSuccessful) {
-                    val body = response.body()
-                    if (body != null && !body.error!!) {
-                        val token = body.loginResult?.token
-                        if (!token.isNullOrEmpty()) {
-                            dataStoreManager.saveToken(token)
-                            _isLoggedIn.value = true
-                            onResult(true)
-                        } else {
-                            _errorMessage.value = "Token tidak valid."
-                            onResult(false)
-                        }
+                    val token = response.body()?.loginResult?.token
+                    if (!token.isNullOrEmpty()) {
+                        dataStoreManager.saveToken(token)
+                        _isLoggedIn.value = true
+                        onResult(true)
                     } else {
-                        _errorMessage.value = body?.message ?: "Gagal login."
+                        _errorMessage.value = "Token tidak valid."
                         onResult(false)
                     }
                 } else {
-                    _errorMessage.value = "Error: ${response.message()}"
+                    _errorMessage.value = "Login gagal: ${response.message()}"
+                    Log.e("AuthViewModel", "Login error response: ${response.errorBody()?.string()}")
                     onResult(false)
                 }
             } catch (e: Exception) {
-                _errorMessage.value = "Error: ${e.message}"
+                _errorMessage.value = "Terjadi kesalahan: ${e.message}"
+                Log.e("AuthViewModel", "Exception: ${e.message}")
                 onResult(false)
             } finally {
                 _isLoading.value = false

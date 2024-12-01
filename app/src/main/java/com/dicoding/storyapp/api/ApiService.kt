@@ -18,21 +18,15 @@ interface ApiService {
 
     // Login endpoint
     @POST("login")
-    suspend fun login(
-        @Body credentials: Map<String, String>
-    ): Response<LoginResponse>
+    suspend fun login(@Body credentials: Map<String, String>): Response<LoginResponse>
 
     // Register endpoint
     @POST("register")
-    suspend fun register(
-        @Body credentials: Map<String, String>
-    ): Response<RegisterResponse>
+    suspend fun register(@Body credentials: Map<String, String>): Response<RegisterResponse>
 
     // Get list of stories
     @GET("stories")
-    suspend fun getStories(
-        @Header("Authorization") token: String
-    ): Response<StoryResponse>
+    suspend fun getStories(@Header("Authorization") token: String): Response<StoryResponse>
 
     // Get story details by ID
     @GET("stories/{id}")
