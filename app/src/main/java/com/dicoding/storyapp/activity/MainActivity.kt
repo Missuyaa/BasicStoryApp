@@ -42,7 +42,6 @@ fun StoryApp(authViewModel: AuthViewModel, storyViewModel: StoryViewModel) {
             navController = navController,
             startDestination = if (isLoggedIn) "story_list" else "login"
         ) {
-            // Perbaikan LoginScreen
             composable("login") {
                 LoginScreen(
                     onLoginSuccess = {
@@ -57,7 +56,6 @@ fun StoryApp(authViewModel: AuthViewModel, storyViewModel: StoryViewModel) {
                 )
             }
 
-            // RegisterScreen
             composable("register") {
                 RegisterScreen(
                     onRegisterSuccess = {
@@ -69,7 +67,6 @@ fun StoryApp(authViewModel: AuthViewModel, storyViewModel: StoryViewModel) {
                 )
             }
 
-            // StoryListScreen
             composable("story_list") {
                 StoryListScreen(
                     navController = navController,
@@ -78,15 +75,19 @@ fun StoryApp(authViewModel: AuthViewModel, storyViewModel: StoryViewModel) {
                 )
             }
 
-            // AddStoryScreen
             composable("add_story") {
-                AddStoryScreen(navController)
+                AddStoryScreen(
+                    navController = navController,
+                    storyViewModel = storyViewModel
+                )
             }
 
-            // StoryDetailScreen
             composable("story_detail/{storyId}") { backStackEntry ->
                 val storyId = backStackEntry.arguments?.getString("storyId") ?: ""
-                StoryDetailScreen(navController, storyId, storyViewModel)
+                StoryDetailScreen(
+                    storyId = storyId,
+                    storyViewModel = storyViewModel
+                )
             }
         }
     }

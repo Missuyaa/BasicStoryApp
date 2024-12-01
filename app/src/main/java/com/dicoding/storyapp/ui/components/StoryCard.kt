@@ -22,23 +22,23 @@ fun StoryCard(story: Story, onClick: () -> Unit) {
         Column(modifier = Modifier.padding(16.dp)) {
             // Nama pengguna
             Text(
-                text = story.name,
+                text = story.name ?: "Tidak diketahui", // Pastikan properti tidak null
                 style = MaterialTheme.typography.titleMedium
             )
             Spacer(modifier = Modifier.height(8.dp))
 
             // Deskripsi cerita
             Text(
-                text = story.description,
+                text = story.description ?: "Deskripsi tidak tersedia", // Pastikan properti tidak null
                 style = MaterialTheme.typography.bodyMedium,
-                maxLines = 2 // Batasi hingga 2 baris
+                maxLines = 2
             )
             Spacer(modifier = Modifier.height(8.dp))
 
             // Gambar cerita
             AsyncImage(
-                model = story.photoUrl,
-                contentDescription = "Story Photo",
+                model = story.photoUrl ?: "", // Default ke string kosong jika null
+                contentDescription = "Gambar Cerita",
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(200.dp)
@@ -46,3 +46,4 @@ fun StoryCard(story: Story, onClick: () -> Unit) {
         }
     }
 }
+

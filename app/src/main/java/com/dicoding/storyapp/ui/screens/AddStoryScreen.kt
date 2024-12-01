@@ -20,7 +20,7 @@ import java.io.File
 @Composable
 fun AddStoryScreen(
     navController: NavHostController,
-    storyViewModel: StoryViewModel = viewModel()
+    storyViewModel: StoryViewModel
 ) {
     val context = LocalContext.current
     var description by remember { mutableStateOf("") }
@@ -28,7 +28,6 @@ fun AddStoryScreen(
     val isLoading by storyViewModel.isLoading.collectAsState()
     val errorMessage by storyViewModel.errorMessage.collectAsState()
 
-    // Launcher untuk memilih file dari galeri
     val galleryLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         imageUri = uri
     }
@@ -37,11 +36,10 @@ fun AddStoryScreen(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Top
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Input deskripsi cerita
-        TextField(
+        // Input deskripsi
+        OutlinedTextField(
             value = description,
             onValueChange = { description = it },
             label = { Text("Deskripsi Cerita") },
@@ -49,29 +47,27 @@ fun AddStoryScreen(
         )
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Tombol untuk memilih gambar
+        // Pilih gambar
         Button(
             onClick = { galleryLauncher.launch("image/*") },
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text(text = "Pilih Gambar")
+            Text("Pilih Gambar")
         }
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
-        // Tampilkan nama file jika gambar sudah dipilih
+        // Tampilkan file gambar jika sudah dipilih
         imageUri?.let {
             Text(text = "Gambar dipilih: ${it.lastPathSegment}")
-        } ?: run {
-            Text(text = "Belum ada gambar dipilih.")
-        }
+        } ?: Text("Belum ada gambar dipilih.")
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Tombol upload cerita
+        // Tombol upload
         Button(
             onClick = {
                 if (imageUri != null) {
-                    val file = uriToFile(imageUri!!, context) // Konversi URI ke File
+                    val file = uriToFile(imageUri!!, context)
                     storyViewModel.uploadStoryWithImage(description, file) { success ->
                         if (success) {
                             navController.navigate("story_list") {
@@ -82,16 +78,16 @@ fun AddStoryScreen(
                         }
                     }
                 } else {
-                    Toast.makeText(context, "Harap pilih gambar.", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "Pilih gambar terlebih dahulu.", Toast.LENGTH_SHORT).show()
                 }
             },
             modifier = Modifier.fillMaxWidth(),
             enabled = description.isNotBlank() && imageUri != null && !isLoading
         ) {
-            Text(text = "Upload Cerita")
+            Text("Upload Cerita")
         }
 
-        // Loading indicator
+        // Loading indikator
         if (isLoading) {
             Spacer(modifier = Modifier.height(16.dp))
             CircularProgressIndicator()
@@ -100,10 +96,11 @@ fun AddStoryScreen(
         // Pesan error
         errorMessage?.let {
             Spacer(modifier = Modifier.height(16.dp))
-            Text(text = "Error: $it", color = MaterialTheme.colorScheme.error)
+            Text(text = it, color = MaterialTheme.colorScheme.error)
         }
     }
 }
+
 
 /**
  * Konversi URI ke File

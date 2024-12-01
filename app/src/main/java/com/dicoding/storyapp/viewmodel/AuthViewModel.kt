@@ -27,39 +27,50 @@ class AuthViewModel(private val dataStoreManager: DataStoreManager) : ViewModel(
             }
         }
     }
-
     fun login(email: String, password: String, onResult: (Boolean) -> Unit) {
         viewModelScope.launch {
             _isLoading.value = true
             try {
-                val response = ApiClient.apiService.login(mapOf("email" to email, "password" to password))
-                Log.d("AuthViewModel", "Login request: email=$email, password=$password")
+                // Encode password sebelum dikirim ke server
+                val encodedPassword = password.toByteArray(Charsets.UTF_8).toString(Charsets.UTF_8)
+                Log.d("AuthViewModel", "Login request: email=$email, password=$encodedPassword")
+
+                val credentials = mapOf("email" to email, "password" to encodedPassword)
+                val response = ApiClient.apiService.login(credentials)
 
                 if (response.isSuccessful) {
                     val token = response.body()?.loginResult?.token
                     if (!token.isNullOrEmpty()) {
                         dataStoreManager.saveToken(token)
                         _isLoggedIn.value = true
+                        _errorMessage.value = null
+                        Log.d("AuthViewModel", "Login Berhasil. Token: $token")
                         onResult(true)
                     } else {
-                        _errorMessage.value = "Token tidak valid."
+                        _errorMessage.value = "Login gagal: Token tidak valid."
+                        Log.e("AuthViewModel", "Token tidak valid.")
                         onResult(false)
                     }
                 } else {
-                    _errorMessage.value = "Login gagal: ${response.message()}"
-                    Log.e("AuthViewModel", "Login error response: ${response.errorBody()?.string()}")
+                    // Tangkap error message dari error body
+                    val errorBody = response.errorBody()?.string()
+                    _errorMessage.value = when {
+                        errorBody?.contains("Invalid password") == true -> "Login gagal: Password salah."
+                        errorBody?.contains("Invalid email") == true -> "Login gagal: Email tidak ditemukan."
+                        else -> "Login gagal: ${response.message()}"
+                    }
+                    Log.e("AuthViewModel", "Login gagal. Error Body: $errorBody")
                     onResult(false)
                 }
             } catch (e: Exception) {
                 _errorMessage.value = "Terjadi kesalahan: ${e.message}"
-                Log.e("AuthViewModel", "Exception: ${e.message}")
+                Log.e("AuthViewModel", "Terjadi kesalahan: ${e.message}")
                 onResult(false)
             } finally {
                 _isLoading.value = false
             }
         }
     }
-
     fun register(name: String, email: String, password: String, onResult: (Boolean) -> Unit) {
         viewModelScope.launch {
             _isLoading.value = true

@@ -1,14 +1,18 @@
 package com.dicoding.storyapp.ui.screens
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import com.dicoding.storyapp.ui.components.StoryCard
 import com.dicoding.storyapp.viewmodel.AuthViewModel
 import com.dicoding.storyapp.viewmodel.StoryViewModel
 
@@ -19,15 +23,20 @@ fun StoryListScreen(
     storyViewModel: StoryViewModel,
     authViewModel: AuthViewModel
 ) {
-    // Observasi token menggunakan collectAsState
-    val token by storyViewModel.token.collectAsState(initial = null)
+    val stories by storyViewModel.stories.collectAsState()
+    val isLoading by storyViewModel.isLoading.collectAsState()
+    val errorMessage by storyViewModel.errorMessage.collectAsState()
+
+    // Memanggil fetchStories saat layar dimuat
+    LaunchedEffect(Unit) {
+        storyViewModel.fetchStories()
+    }
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Daftar Cerita") },
                 actions = {
-                    // Tombol logout
                     Button(
                         onClick = {
                             authViewModel.logout()
@@ -46,19 +55,29 @@ fun StoryListScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues),
-            verticalArrangement = Arrangement.Center,
+            verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            if (token.isNullOrEmpty()) {
-                // Tampilkan pesan jika token tidak ditemukan
-                Text(
-                    text = "Token tidak ditemukan. Harap login ulang.",
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodyLarge
+            when {
+                isLoading -> CircularProgressIndicator()
+                errorMessage != null -> Text(
+                    text = errorMessage ?: "Terjadi kesalahan.",
+                    color = MaterialTheme.colorScheme.error
                 )
-            } else {
-                // Tampilkan UI daftar cerita di sini
-                Text(text = "Token ditemukan: $token")
+                stories.isNotEmpty() -> {
+                    LazyColumn {
+                        items(stories) { story ->
+                            StoryCard(
+                                story = story,
+                                onClick = {
+                                    // Navigasi ke detail cerita
+                                    navController.navigate("story_detail/${story.id}")
+                                }
+                            )
+                        }
+                    }
+                }
+                else -> Text(text = "Tidak ada cerita yang ditemukan.")
             }
         }
     }
