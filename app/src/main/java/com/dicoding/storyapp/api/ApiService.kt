@@ -2,7 +2,6 @@ package com.dicoding.storyapp.api
 
 import com.dicoding.storyapp.model.LoginResponse
 import com.dicoding.storyapp.model.RegisterResponse
-import com.dicoding.storyapp.model.Story
 import com.dicoding.storyapp.model.StoryResponse
 import com.dicoding.storyapp.model.StoryResponseWrapper
 import okhttp3.MultipartBody
@@ -18,17 +17,13 @@ import retrofit2.http.Part
 import retrofit2.http.Path
 
 interface ApiService {
-
-    // Login endpoint
     @POST("login")
     @Headers("Content-Type: application/json")
     suspend fun login(@Body credentials: Map<String, String>): Response<LoginResponse>
 
-    // Register endpoint
     @POST("register")
     suspend fun register(@Body credentials: Map<String, String>): Response<RegisterResponse>
 
-    // Get list of stories
     @GET("stories")
     suspend fun getStories(@Header("Authorization") token: String): Response<StoryResponse>
 
@@ -38,7 +33,6 @@ interface ApiService {
         @Path("id") storyId: String
     ): Response<StoryResponseWrapper>
 
-    // Add story with optional image
     @Multipart
     @POST("stories")
     suspend fun addStory(
@@ -49,7 +43,6 @@ interface ApiService {
         @Part("lon") lon: RequestBody? = null
     ): Response<Unit>
 
-    // Add story with image only
     @Multipart
     @POST("stories")
     suspend fun addStoryWithImage(

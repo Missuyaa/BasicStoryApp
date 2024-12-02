@@ -17,7 +17,7 @@ import kotlinx.coroutines.launch
 fun AnimatedButton(
     onClick: () -> Unit,
     text: String,
-    duration: Int = 150
+    duration: Int = 300
 ) {
     val scale = remember { Animatable(1f) }
     val coroutineScope = rememberCoroutineScope()

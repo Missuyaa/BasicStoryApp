@@ -29,7 +29,6 @@ fun StoryListScreen(
     val isLoading by storyViewModel.isLoading.collectAsState()
     val errorMessage by storyViewModel.errorMessage.collectAsState()
 
-    // Memanggil fetchStories saat layar dimuat
     LaunchedEffect(Unit) {
         storyViewModel.fetchStories()
     }
@@ -54,7 +53,6 @@ fun StoryListScreen(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
-                    // Navigasi ke halaman tambah cerita
                     navController.navigate("add_story")
                 }
             ) {
@@ -84,7 +82,6 @@ fun StoryListScreen(
                             StoryCard(
                                 story = story,
                                 onClick = {
-                                    // Navigasi ke detail cerita
                                     navController.navigate("story_detail/${story.id}")
                                 }
                             )

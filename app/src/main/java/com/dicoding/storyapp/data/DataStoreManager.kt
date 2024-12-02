@@ -10,7 +10,6 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import java.io.IOException
 
-// Ekstensi untuk membuat DataStore
 private val Context.dataStore by preferencesDataStore(name = "user_prefs")
 
 class DataStoreManager(private val context: Context) {
@@ -30,7 +29,7 @@ class DataStoreManager(private val context: Context) {
             }
             .map { preferences ->
                 val token = preferences[TOKEN_KEY]
-                println("Token diambil dari DataStore: $token") // Log token yang diambil
+                println("Token diambil dari DataStore: $token")
                 token
             }
     }
@@ -40,9 +39,9 @@ class DataStoreManager(private val context: Context) {
             context.dataStore.edit { preferences ->
                 preferences[TOKEN_KEY] = token
             }
-            println("Token berhasil disimpan: $token") // Log keberhasilan penyimpanan token
+            println("Token berhasil disimpan: $token")
         } catch (e: Exception) {
-            println("Error saving token: ${e.message}") // Log jika terjadi error saat menyimpan token
+            println("Error saving token: ${e.message}")
         }
     }
 
@@ -51,9 +50,9 @@ class DataStoreManager(private val context: Context) {
             context.dataStore.edit { preferences ->
                 preferences.clear()
             }
-            println("Token berhasil dihapus.") // Log keberhasilan penghapusan token
+            println("Token berhasil dihapus.")
         } catch (e: Exception) {
-            println("Error clearing token: ${e.message}") // Log jika terjadi error saat menghapus token
+            println("Error clearing token: ${e.message}")
         }
     }
 }

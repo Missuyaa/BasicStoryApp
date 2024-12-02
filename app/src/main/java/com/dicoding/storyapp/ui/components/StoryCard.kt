@@ -20,24 +20,21 @@ fun StoryCard(story: Story, onClick: () -> Unit) {
             .clickable { onClick() }
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            // Nama pengguna
             Text(
-                text = story.name ?: "Tidak diketahui", // Pastikan properti tidak null
+                text = story.name ?: "Tidak diketahui",
                 style = MaterialTheme.typography.titleMedium
             )
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Deskripsi cerita
             Text(
-                text = story.description ?: "Deskripsi tidak tersedia", // Pastikan properti tidak null
+                text = story.description ?: "Deskripsi tidak tersedia",
                 style = MaterialTheme.typography.bodyMedium,
                 maxLines = 2
             )
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Gambar cerita
             AsyncImage(
-                model = story.photoUrl ?: "", // Default ke string kosong jika null
+                model = story.photoUrl ?: "",
                 contentDescription = "Gambar Cerita",
                 modifier = Modifier
                     .fillMaxWidth()

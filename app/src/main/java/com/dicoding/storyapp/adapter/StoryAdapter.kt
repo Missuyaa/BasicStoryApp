@@ -34,19 +34,16 @@ class StoryAdapter(private val stories: List<Story>, private val context: Contex
         holder.nameTextView.text = story.name
         holder.descriptionTextView.text = story.description
 
-        // Muat gambar menggunakan Glide
         Glide.with(context)
             .load(story.photoUrl)
             .into(holder.photoImageView)
 
-        // Klik listener untuk membuka halaman detail dengan Shared Element Animation
         holder.itemView.setOnClickListener {
             val intent = Intent(context, StoryDetailActivity::class.java)
             intent.putExtra("name", story.name)
             intent.putExtra("photoUrl", story.photoUrl)
             intent.putExtra("description", story.description)
 
-            // Gunakan ActivityOptions untuk animasi shared element
             val options = ActivityOptions.makeSceneTransitionAnimation(
                 context as Activity,
                 holder.photoImageView,

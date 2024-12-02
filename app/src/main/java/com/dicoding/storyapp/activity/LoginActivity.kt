@@ -2,12 +2,8 @@ package com.dicoding.storyapp.activity
 
 import android.content.Intent
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.dicoding.storyapp.data.DataStoreManager
 import com.dicoding.storyapp.ui.StoryAppTheme

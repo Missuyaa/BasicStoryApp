@@ -11,8 +11,8 @@ import com.dicoding.storyapp.viewmodel.AuthViewModel
 
 @Composable
 fun LoginScreen(
-    onLoginSuccess: () -> Unit, // Callback jika login berhasil
-    onRegisterClick: () -> Unit, // Callback untuk navigasi ke register
+    onLoginSuccess: () -> Unit,
+    onRegisterClick: () -> Unit,
     authViewModel: AuthViewModel
 ) {
     var email by remember { mutableStateOf("") }
@@ -34,7 +34,6 @@ fun LoginScreen(
             modifier = Modifier.padding(bottom = 16.dp)
         )
 
-        // Input email
         TextField(
             value = email,
             onValueChange = { email = it },
@@ -45,7 +44,6 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Input password
         TextField(
             value = password,
             onValueChange = { password = it },
@@ -57,7 +55,6 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Tombol login
         Button(
             onClick = {
                 authViewModel.login(email, password) { isSuccess ->
@@ -79,7 +76,6 @@ fun LoginScreen(
             }
         }
 
-        // Tampilkan pesan error jika ada
         errorMessage?.let {
             Text(
                 text = it,
@@ -91,7 +87,6 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Navigasi ke register
         TextButton(onClick = { onRegisterClick() }) {
             Text("Don't have an account? Register")
         }

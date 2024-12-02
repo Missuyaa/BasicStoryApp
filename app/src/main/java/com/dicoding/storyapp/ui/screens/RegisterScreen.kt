@@ -7,13 +7,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavHostController
 import com.dicoding.storyapp.viewmodel.AuthViewModel
 
 
 @Composable
 fun RegisterScreen(
-    onRegisterSuccess: () -> Unit, // Callback jika registrasi berhasil
+    onRegisterSuccess: () -> Unit,
     authViewModel: AuthViewModel
 ) {
     var name by remember { mutableStateOf("") }

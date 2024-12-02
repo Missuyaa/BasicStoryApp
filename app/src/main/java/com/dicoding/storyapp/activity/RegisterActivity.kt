@@ -28,10 +28,8 @@ class RegisterActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_register)
 
-        // Inisialisasi view
         initViews()
 
-        // Tombol register
         registerButton.setOnClickListener {
             val name = nameEditText.text.toString().trim()
             val email = emailEditText.text.toString().trim()
@@ -42,15 +40,11 @@ class RegisterActivity : AppCompatActivity() {
             }
         }
 
-        // Navigasi ke halaman login
         loginRedirectTextView.setOnClickListener {
             navigateToLogin()
         }
     }
 
-    /**
-     * Fungsi untuk inisialisasi view
-     */
     private fun initViews() {
         nameEditText = findViewById(R.id.ed_register_name)
         emailEditText = findViewById(R.id.ed_register_email)
@@ -59,9 +53,6 @@ class RegisterActivity : AppCompatActivity() {
         loginRedirectTextView = findViewById(R.id.tv_login_redirect)
     }
 
-    /**
-     * Fungsi untuk validasi input pengguna
-     */
     private fun validateInputs(name: String, email: String, password: String): Boolean {
         if (name.isEmpty() || email.isEmpty() || password.isEmpty()) {
             showToast("Semua field harus diisi!")
@@ -76,9 +67,6 @@ class RegisterActivity : AppCompatActivity() {
         return true
     }
 
-    /**
-     * Fungsi untuk melakukan registrasi
-     */
     private fun register(name: String, email: String, password: String) {
         val retrofit = Retrofit.Builder()
             .baseUrl("https://story-api.dicoding.dev/v1/")
@@ -86,8 +74,6 @@ class RegisterActivity : AppCompatActivity() {
             .build()
 
         val apiService = retrofit.create(ApiService::class.java)
-
-        // Gunakan coroutine untuk memanggil suspend function
         lifecycleScope.launch(Dispatchers.IO) {
             try {
                 val user = mapOf(
@@ -107,10 +93,10 @@ class RegisterActivity : AppCompatActivity() {
                             "Registrasi berhasil!",
                             Toast.LENGTH_SHORT
                         ).show()
-                        finish() // Kembali ke halaman login
+                        finish()
                     }
                 } else {
-                    val errorBody = response.errorBody()?.string() // Dapatkan pesan error
+                    val errorBody = response.errorBody()?.string()
                     withContext(Dispatchers.Main) {
                         Toast.makeText(
                             this@RegisterActivity,
@@ -131,18 +117,12 @@ class RegisterActivity : AppCompatActivity() {
         }
     }
 
-    /**
-     * Fungsi untuk navigasi ke halaman login
-     */
     private fun navigateToLogin() {
         val intent = Intent(this, LoginActivity::class.java)
         startActivity(intent)
-        finish() // Menutup RegisterActivity
+        finish()
     }
 
-    /**
-     * Fungsi untuk menampilkan pesan toast
-     */
     private fun showToast(message: String) {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
     }
