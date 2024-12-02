@@ -1,6 +1,7 @@
 package com.dicoding.storyapp.activity
 
 import android.os.Bundle
+import android.transition.TransitionInflater
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
@@ -18,15 +19,20 @@ class StoryDetailActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        window.sharedElementEnterTransition = TransitionInflater.from(this)
+            .inflateTransition(android.R.transition.move)
+        window.sharedElementExitTransition = TransitionInflater.from(this)
+            .inflateTransition(android.R.transition.move)
+
         setContentView(R.layout.activity_story_detail)
 
         val storyId = intent.getStringExtra("STORY_ID") ?: ""
         val dataStoreManager = DataStoreManager(applicationContext)
-        val factory = StoryViewModelFactory(dataStoreManager)
+        val factory = StoryViewModelFactory(dataStoreManager, applicationContext)
         storyViewModel = ViewModelProvider(this, factory)[StoryViewModel::class.java]
 
         storyViewModel.fetchStoryDetail(storyId)
-
         lifecycleScope.launch {
             storyViewModel.storyDetail.collect { story ->
                 if (story != null) {
@@ -37,8 +43,12 @@ class StoryDetailActivity : AppCompatActivity() {
                             .error(R.drawable.ic_error)
                             .into(it)
                     }
-                    findViewById<TextView>(R.id.tv_detail_name).text = story.name ?: "Tidak diketahui"
-                    findViewById<TextView>(R.id.tv_detail_description).text = story.description ?: "Deskripsi tidak tersedia"
+
+                    findViewById<TextView>(R.id.tv_detail_name).text =
+                        story.name ?: "Nama tidak diketahui"
+
+                    findViewById<TextView>(R.id.tv_detail_description).text =
+                        story.description ?: "Deskripsi tidak tersedia"
                 }
             }
         }

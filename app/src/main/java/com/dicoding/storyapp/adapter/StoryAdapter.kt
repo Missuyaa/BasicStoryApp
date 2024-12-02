@@ -1,5 +1,7 @@
 package com.dicoding.storyapp.adapter
 
+import android.app.Activity
+import android.app.ActivityOptions
 import android.content.Context
 import android.content.Intent
 import android.view.LayoutInflater
@@ -37,15 +39,24 @@ class StoryAdapter(private val stories: List<Story>, private val context: Contex
             .load(story.photoUrl)
             .into(holder.photoImageView)
 
-        // Klik listener untuk membuka halaman detail
+        // Klik listener untuk membuka halaman detail dengan Shared Element Animation
         holder.itemView.setOnClickListener {
             val intent = Intent(context, StoryDetailActivity::class.java)
             intent.putExtra("name", story.name)
             intent.putExtra("photoUrl", story.photoUrl)
             intent.putExtra("description", story.description)
-            context.startActivity(intent)
+
+            // Gunakan ActivityOptions untuk animasi shared element
+            val options = ActivityOptions.makeSceneTransitionAnimation(
+                context as Activity,
+                holder.photoImageView,
+                "story_image"
+            )
+
+            context.startActivity(intent, options.toBundle())
         }
     }
+
 
     override fun getItemCount(): Int = stories.size
 }

@@ -25,8 +25,6 @@ class StoryListActivity : AppCompatActivity() {
 
         val recyclerView = findViewById<RecyclerView>(R.id.rv_stories)
         recyclerView.layoutManager = LinearLayoutManager(this)
-
-        // Ambil token dari SharedPreferences
         val sharedPreferences = getSharedPreferences("StoryAppPrefs", MODE_PRIVATE)
         val token = sharedPreferences.getString("token", null)
 

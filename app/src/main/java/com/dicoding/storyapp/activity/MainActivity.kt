@@ -1,5 +1,6 @@
 package com.dicoding.storyapp.activity
 
+import AddStoryScreen
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -26,7 +27,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val authViewModel: AuthViewModel = viewModel(factory = AuthViewModelFactory(dataStoreManager))
-            val storyViewModel: StoryViewModel = viewModel(factory = StoryViewModelFactory(dataStoreManager))
+            val storyViewModel: StoryViewModel = viewModel(factory = StoryViewModelFactory(dataStoreManager, applicationContext))
             StoryApp(authViewModel, storyViewModel)
         }
     }

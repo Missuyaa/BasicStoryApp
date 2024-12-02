@@ -20,23 +20,19 @@ class LoginActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Inisialisasi DataStoreManager
         val dataStoreManager = DataStoreManager(applicationContext)
 
         setContent {
-            // Inisialisasi ViewModel menggunakan Factory
+
             val authViewModel: AuthViewModel = viewModel(factory = AuthViewModelFactory(dataStoreManager))
 
-            // Menampilkan UI Login
             StoryAppTheme {
                 LoginScreen(
                     onLoginSuccess = {
-                        // Navigasi ke MainActivity jika login berhasil
                         startActivity(Intent(this, MainActivity::class.java))
                         finish()
                     },
                     onRegisterClick = {
-                        // Navigasi ke RegisterActivity jika pengguna memilih register
                         startActivity(Intent(this, RegisterActivity::class.java))
                     },
                     authViewModel = authViewModel

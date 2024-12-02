@@ -15,7 +15,6 @@
         android:theme="@style/Theme.StoryApp"
         tools:targetApi="31">
 
-        <!-- Daftarkan aktivitas-aktivitas aplikasi -->
         <activity
             android:name="com.dicoding.storyapp.activity.RegisterActivity"
             android:exported="true"

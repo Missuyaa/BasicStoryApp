@@ -1,9 +1,11 @@
 package com.dicoding.storyapp.viewmodel
 
+import android.content.ContentResolver
+import android.content.Context
+import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.dicoding.storyapp.api.ApiClient
 import com.dicoding.storyapp.api.ApiService
 import com.dicoding.storyapp.data.DataStoreManager
 import com.dicoding.storyapp.model.Story
@@ -13,14 +15,18 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
-import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.io.File
+import java.io.FileOutputStream
+import java.io.InputStream
 
-class StoryViewModel(private val dataStoreManager: DataStoreManager) : ViewModel() {
+class StoryViewModel(
+    private val dataStoreManager: DataStoreManager,
+    private val context: Context
+) : ViewModel() {
 
     private val _stories = MutableStateFlow<List<Story>>(emptyList())
     val stories: StateFlow<List<Story>> = _stories
@@ -60,6 +66,7 @@ class StoryViewModel(private val dataStoreManager: DataStoreManager) : ViewModel
         _isLoading.value = false
         _isSuccess.value = false
     }
+
     fun fetchStories() {
         viewModelScope.launch {
             _isLoading.value = true
@@ -74,7 +81,6 @@ class StoryViewModel(private val dataStoreManager: DataStoreManager) : ViewModel
                 val response = apiService.getStories("Bearer $token")
                 if (response.isSuccessful) {
                     val storyResponse = response.body()
-                    Log.d("StoryViewModel", "Response API: $storyResponse")
                     if (storyResponse != null && !storyResponse.error) {
                         _stories.value = storyResponse.listStory
                         _errorMessage.value = null
@@ -82,7 +88,6 @@ class StoryViewModel(private val dataStoreManager: DataStoreManager) : ViewModel
                         handleError(storyResponse?.message ?: "Gagal memuat cerita.")
                     }
                 } else {
-                    Log.e("StoryViewModel", "Error Body: ${response.errorBody()?.string()}")
                     handleError("Gagal memuat cerita: ${response.message()}")
                 }
             } catch (e: Exception) {
@@ -99,7 +104,7 @@ class StoryViewModel(private val dataStoreManager: DataStoreManager) : ViewModel
             try {
                 val token = _token.value
                 if (token.isNullOrEmpty()) {
-                    _errorMessage.value = "Token tidak ditemukan. Harap login ulang."
+                    handleError("Token tidak ditemukan. Harap login ulang.")
                     return@launch
                 }
 
@@ -108,21 +113,36 @@ class StoryViewModel(private val dataStoreManager: DataStoreManager) : ViewModel
                     val storyResponseWrapper = response.body()
                     if (storyResponseWrapper != null && !storyResponseWrapper.error) {
                         _storyDetail.value = storyResponseWrapper.story
+                        _errorMessage.value = null
                     } else {
-                        _errorMessage.value = storyResponseWrapper?.message ?: "Detail cerita tidak ditemukan."
+                        handleError(storyResponseWrapper?.message ?: "Detail cerita tidak ditemukan.")
                     }
                 } else {
-                    _errorMessage.value = "Gagal memuat detail cerita: ${response.message()}"
+                    handleError("Gagal memuat detail cerita: ${response.message()}")
                 }
             } catch (e: Exception) {
-                _errorMessage.value = "Terjadi kesalahan: ${e.message}"
+                handleError("Terjadi kesalahan: ${e.message}")
             } finally {
                 _isLoading.value = false
             }
         }
     }
 
-    fun uploadStoryWithImage(description: String, imageFile: File, onComplete: (Boolean) -> Unit) {
+    private fun uriToFile(uri: Uri): File {
+        val contentResolver: ContentResolver = context.contentResolver
+        val tempFile = File(context.cacheDir, "${System.currentTimeMillis()}.jpg")
+        val inputStream: InputStream? = contentResolver.openInputStream(uri)
+        val outputStream = FileOutputStream(tempFile)
+
+        inputStream.use { input ->
+            outputStream.use { output ->
+                input?.copyTo(output)
+            }
+        }
+        return tempFile
+    }
+
+    fun uploadStoryWithImage(description: String, imageUri: Uri, onComplete: (Boolean) -> Unit) {
         viewModelScope.launch {
             _isLoading.value = true
             try {
@@ -132,6 +152,8 @@ class StoryViewModel(private val dataStoreManager: DataStoreManager) : ViewModel
                     onComplete(false)
                     return@launch
                 }
+
+                val imageFile = uriToFile(imageUri)
 
                 val requestImageFile = imageFile.asRequestBody("image/jpeg".toMediaType())
                 val imageMultipart = MultipartBody.Part.createFormData(
