@@ -31,17 +31,13 @@ class AuthViewModel(private val dataStoreManager: DataStoreManager) : ViewModel(
         viewModelScope.launch {
             _isLoading.value = true
             try {
-                // Encode password sebelum dikirim ke server
-                val encodedPassword = password.toByteArray(Charsets.UTF_8).toString(Charsets.UTF_8)
-                Log.d("AuthViewModel", "Login request: email=$email, password=$encodedPassword")
-
-                val credentials = mapOf("email" to email, "password" to encodedPassword)
+                val credentials = mapOf("email" to email, "password" to password)
                 val response = ApiClient.apiService.login(credentials)
 
                 if (response.isSuccessful) {
                     val token = response.body()?.loginResult?.token
                     if (!token.isNullOrEmpty()) {
-                        dataStoreManager.saveToken(token)
+                        dataStoreManager.saveToken(token) // Simpan token
                         _isLoggedIn.value = true
                         _errorMessage.value = null
                         Log.d("AuthViewModel", "Login Berhasil. Token: $token")
@@ -52,13 +48,8 @@ class AuthViewModel(private val dataStoreManager: DataStoreManager) : ViewModel(
                         onResult(false)
                     }
                 } else {
-                    // Tangkap error message dari error body
                     val errorBody = response.errorBody()?.string()
-                    _errorMessage.value = when {
-                        errorBody?.contains("Invalid password") == true -> "Login gagal: Password salah."
-                        errorBody?.contains("Invalid email") == true -> "Login gagal: Email tidak ditemukan."
-                        else -> "Login gagal: ${response.message()}"
-                    }
+                    _errorMessage.value = "Login gagal: ${errorBody ?: response.message()}"
                     Log.e("AuthViewModel", "Login gagal. Error Body: $errorBody")
                     onResult(false)
                 }
@@ -111,4 +102,3 @@ class AuthViewModel(private val dataStoreManager: DataStoreManager) : ViewModel(
         }
     }
 }
-

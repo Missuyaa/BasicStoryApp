@@ -26,7 +26,6 @@ class CustomEditText @JvmOverloads constructor(
         }
     }
 
-    // Fungsi untuk validasi password
     private fun validatePassword() {
         val text = text?.toString() ?: ""
         if (text.length < 8) {

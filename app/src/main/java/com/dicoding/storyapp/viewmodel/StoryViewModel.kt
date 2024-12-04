@@ -12,6 +12,7 @@ import com.dicoding.storyapp.model.Story
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
@@ -27,7 +28,6 @@ class StoryViewModel(
     private val dataStoreManager: DataStoreManager,
     private val context: Context
 ) : ViewModel() {
-
     private val _stories = MutableStateFlow<List<Story>>(emptyList())
     val stories: StateFlow<List<Story>> = _stories
 
@@ -55,8 +55,13 @@ class StoryViewModel(
 
     init {
         viewModelScope.launch {
-            _token.value = dataStoreManager.getToken().first()
-            Log.d("StoryViewModel", "Token diinisialisasi: ${_token.value}")
+            val token = dataStoreManager.getToken().firstOrNull()
+            if (!token.isNullOrEmpty()) {
+                _token.value = token
+                Log.d("StoryViewModel", "Token berhasil diambil: $token")
+            } else {
+                Log.e("StoryViewModel", "Token tidak ditemukan. Harap login ulang.")
+            }
         }
     }
 
