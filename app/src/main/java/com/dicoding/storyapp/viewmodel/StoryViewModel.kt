@@ -6,20 +6,17 @@ import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.dicoding.storyapp.api.ApiService
+import com.dicoding.storyapp.api.ApiClient
 import com.dicoding.storyapp.data.DataStoreManager
 import com.dicoding.storyapp.model.Story
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
 import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStream
@@ -28,6 +25,9 @@ class StoryViewModel(
     private val dataStoreManager: DataStoreManager,
     private val context: Context
 ) : ViewModel() {
+
+    private val apiService = ApiClient.apiService
+
     private val _stories = MutableStateFlow<List<Story>>(emptyList())
     val stories: StateFlow<List<Story>> = _stories
 
@@ -43,24 +43,13 @@ class StoryViewModel(
     private val _isSuccess = MutableStateFlow(false)
     val isSuccess: StateFlow<Boolean> = _isSuccess
 
-    private val _token = MutableStateFlow<String?>(null)
-    val token: StateFlow<String?> = _token
-
-    private val retrofit = Retrofit.Builder()
-        .baseUrl("https://story-api.dicoding.dev/v1/")
-        .addConverterFactory(GsonConverterFactory.create())
-        .build()
-
-    private val apiService = retrofit.create(ApiService::class.java)
-
     init {
         viewModelScope.launch {
             val token = dataStoreManager.getToken().firstOrNull()
-            if (!token.isNullOrEmpty()) {
-                _token.value = token
-                Log.d("StoryViewModel", "Token berhasil diambil: $token")
-            } else {
+            if (token.isNullOrEmpty()) {
                 Log.e("StoryViewModel", "Token tidak ditemukan. Harap login ulang.")
+            } else {
+                Log.d("StoryViewModel", "Token berhasil diambil: $token")
             }
         }
     }
@@ -72,17 +61,22 @@ class StoryViewModel(
         _isSuccess.value = false
     }
 
+    private suspend fun getToken(): String? {
+        return dataStoreManager.getToken().firstOrNull()
+    }
+
     fun fetchStories() {
         viewModelScope.launch {
             _isLoading.value = true
-            try {
-                val token = _token.value
-                if (token.isNullOrEmpty()) {
-                    handleError("Token tidak ditemukan. Harap login ulang.")
-                    return@launch
-                }
+            val token = getToken()
 
-                Log.d("StoryViewModel", "Mengambil cerita dengan token: Bearer $token")
+            if (token.isNullOrEmpty()) {
+                _errorMessage.value = "Token tidak ditemukan. Harap login ulang."
+                _isLoading.value = false
+                return@launch
+            }
+
+            try {
                 val response = apiService.getStories("Bearer $token")
                 if (response.isSuccessful) {
                     val storyResponse = response.body()
@@ -90,13 +84,13 @@ class StoryViewModel(
                         _stories.value = storyResponse.listStory
                         _errorMessage.value = null
                     } else {
-                        handleError(storyResponse?.message ?: "Gagal memuat cerita.")
+                        _errorMessage.value = storyResponse?.message ?: "Gagal memuat cerita."
                     }
                 } else {
-                    handleError("Gagal memuat cerita: ${response.message()}")
+                    _errorMessage.value = "Gagal memuat cerita: ${response.message()}"
                 }
             } catch (e: Exception) {
-                handleError("Terjadi kesalahan: ${e.message}")
+                _errorMessage.value = "Terjadi kesalahan: ${e.message}"
             } finally {
                 _isLoading.value = false
             }
@@ -106,13 +100,15 @@ class StoryViewModel(
     fun fetchStoryDetail(storyId: String) {
         viewModelScope.launch {
             _isLoading.value = true
-            try {
-                val token = _token.value
-                if (token.isNullOrEmpty()) {
-                    handleError("Token tidak ditemukan. Harap login ulang.")
-                    return@launch
-                }
+            val token = getToken()
 
+            if (token.isNullOrEmpty()) {
+                _errorMessage.value = "Token tidak ditemukan. Harap login ulang."
+                _isLoading.value = false
+                return@launch
+            }
+
+            try {
                 val response = apiService.getStoryDetail("Bearer $token", storyId)
                 if (response.isSuccessful) {
                     val storyResponseWrapper = response.body()
@@ -120,13 +116,14 @@ class StoryViewModel(
                         _storyDetail.value = storyResponseWrapper.story
                         _errorMessage.value = null
                     } else {
-                        handleError(storyResponseWrapper?.message ?: "Detail cerita tidak ditemukan.")
+                        _errorMessage.value =
+                            storyResponseWrapper?.message ?: "Detail cerita tidak ditemukan."
                     }
                 } else {
-                    handleError("Gagal memuat detail cerita: ${response.message()}")
+                    _errorMessage.value = "Gagal memuat detail cerita: ${response.message()}"
                 }
             } catch (e: Exception) {
-                handleError("Terjadi kesalahan: ${e.message}")
+                _errorMessage.value = "Terjadi kesalahan: ${e.message}"
             } finally {
                 _isLoading.value = false
             }
@@ -150,14 +147,15 @@ class StoryViewModel(
     fun uploadStoryWithImage(description: String, imageUri: Uri, onComplete: (Boolean) -> Unit) {
         viewModelScope.launch {
             _isLoading.value = true
-            try {
-                val token = _token.value
-                if (token.isNullOrEmpty()) {
-                    handleError("Token tidak ditemukan. Harap login ulang.")
-                    onComplete(false)
-                    return@launch
-                }
+            val token = getToken()
 
+            if (token.isNullOrEmpty()) {
+                handleError("Token tidak ditemukan. Harap login ulang.")
+                onComplete(false)
+                return@launch
+            }
+
+            try {
                 val imageFile = uriToFile(imageUri)
 
                 val requestImageFile = imageFile.asRequestBody("image/jpeg".toMediaType())
@@ -190,15 +188,4 @@ class StoryViewModel(
         }
     }
 
-    fun logout() {
-        viewModelScope.launch {
-            dataStoreManager.clearToken()
-            _token.value = null
-            _stories.value = emptyList()
-            _storyDetail.value = null
-            _errorMessage.value = null
-            _isSuccess.value = false
-            Log.d("StoryViewModel", "Logout berhasil.")
-        }
-    }
 }
