@@ -36,7 +36,7 @@ class MainActivity : ComponentActivity() {
 fun StoryApp(authViewModel: AuthViewModel, storyViewModel: StoryViewModel) {
     StoryAppTheme {
         val navController = rememberNavController()
-        val isLoggedIn by authViewModel.isLoggedIn.collectAsState()
+        val isLoggedIn by authViewModel.isLoggedIn.collectAsState() // Status login dari ViewModel
 
         NavHost(
             navController = navController,

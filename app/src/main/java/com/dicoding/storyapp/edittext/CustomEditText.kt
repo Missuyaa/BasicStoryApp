@@ -6,13 +6,12 @@ import androidx.appcompat.widget.AppCompatEditText
 import com.dicoding.storyapp.R
 
 class CustomEditText @JvmOverloads constructor(
-    context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0) :
-    AppCompatEditText(context, attrs, defStyleAttr) {
+    context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
+) : AppCompatEditText(context, attrs, defStyleAttr) {
+
     init {
         setOnFocusChangeListener { _, hasFocus ->
-            if (!hasFocus) {
-                validatePassword()
-            }
+            if (!hasFocus) validatePassword()
         }
     }
 

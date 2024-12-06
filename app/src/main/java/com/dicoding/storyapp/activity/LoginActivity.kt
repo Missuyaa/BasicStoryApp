@@ -18,22 +18,38 @@ class LoginActivity : ComponentActivity() {
 
         val dataStoreManager = DataStoreManager(applicationContext)
 
-        setContent {
+        // Cek token login dari DataStore atau SharedPreferences
+        val sharedPref = getSharedPreferences("user_session", MODE_PRIVATE)
+        val token = sharedPref.getString("TOKEN", null)
 
-            val authViewModel: AuthViewModel = viewModel(factory = AuthViewModelFactory(dataStoreManager))
+        if (token != null) {
+            // Jika token ditemukan, langsung masuk ke MainActivity
+            startActivity(Intent(this, MainActivity::class.java))
+            finish()
+        } else {
+            // Jika belum login, tampilkan LoginScreen
+            setContent {
+                val authViewModel: AuthViewModel =
+                    viewModel(factory = AuthViewModelFactory(dataStoreManager))
 
-            StoryAppTheme {
-                LoginScreen(
-                    onLoginSuccess = {
-                        startActivity(Intent(this, MainActivity::class.java))
-                        finish()
-                    },
-                    onRegisterClick = {
-                        startActivity(Intent(this, RegisterActivity::class.java))
-                    },
-                    authViewModel = authViewModel
-                )
+                StoryAppTheme {
+                    LoginScreen(
+                        onLoginSuccess = {
+                            // Simpan token saat login berhasil
+                            sharedPref.edit().putString("TOKEN", token).apply()
+
+                            // Pindah ke MainActivity
+                            startActivity(Intent(this, MainActivity::class.java))
+                            finish()
+                        },
+                        onRegisterClick = {
+                            startActivity(Intent(this, RegisterActivity::class.java))
+                        },
+                        authViewModel = authViewModel
+                    )
+                }
             }
         }
     }
 }
+
