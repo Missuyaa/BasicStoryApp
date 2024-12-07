@@ -7,6 +7,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
+import com.dicoding.storyapp.edittext.CustomEditText
 import com.dicoding.storyapp.viewmodel.AuthViewModel
 
 
@@ -18,6 +20,7 @@ fun RegisterScreen(
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var isPasswordValid by remember { mutableStateOf(false) }
 
     val isLoading by authViewModel.isLoading.collectAsState()
     val errorMessage by authViewModel.errorMessage.collectAsState()
@@ -53,13 +56,37 @@ fun RegisterScreen(
         )
         Spacer(modifier = Modifier.height(8.dp))
 
-        TextField(
-            value = password,
-            onValueChange = { password = it },
-            label = { Text("Password") },
-            visualTransformation = PasswordVisualTransformation(),
+        // Custom EditText for Password
+        AndroidView(
+            factory = { context ->
+                CustomEditText(context).apply {
+                    hint = "Password"
+                    isFocusable = true
+                    isFocusableInTouchMode = true
+                }
+            },
             modifier = Modifier.fillMaxWidth(),
-            isError = password.isEmpty() && !isLoading
+            update = { view ->
+                // Jangan panggil setText jika tidak diperlukan
+                if (view.text.toString() != password) {
+                    view.setText(password)
+                    view.setSelection(password.length)
+                }
+
+                // Tambahkan listener untuk sinkronisasi password
+                view.addTextChangedListener(object : android.text.TextWatcher {
+                    override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+                    override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                        password = s.toString()
+                    }
+                    override fun afterTextChanged(s: android.text.Editable?) {}
+                })
+
+                // Validasi password melalui callback
+                view.onValidationChanged = { isValid ->
+                    isPasswordValid = isValid
+                }
+            }
         )
         Spacer(modifier = Modifier.height(16.dp))
 

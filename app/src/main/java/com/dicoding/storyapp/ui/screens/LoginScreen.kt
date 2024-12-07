@@ -21,6 +21,8 @@ fun LoginScreen(
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var isEmailInvalid by remember { mutableStateOf(false) }
+    var isPasswordInvalid by remember { mutableStateOf(false) }
+
 
     val isLoading by authViewModel.isLoading.collectAsState()
     val errorMessage by authViewModel.errorMessage.collectAsState()
@@ -80,8 +82,7 @@ fun LoginScreen(
                 AppCompatEditText(context).apply {
                     hint = "Password"
                     inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
-                    isFocusable = true
-                    isFocusableInTouchMode = true
+                    setPadding(16, 16, 16, 16) // Padding konsisten
                 }
             },
             update = { view ->
@@ -94,6 +95,7 @@ fun LoginScreen(
                     override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
                     override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
                         password = s.toString()
+                        isPasswordInvalid = password.length < 8
                     }
                     override fun afterTextChanged(s: android.text.Editable?) {}
                 })
@@ -102,6 +104,14 @@ fun LoginScreen(
                 .fillMaxWidth()
                 .padding(vertical = 8.dp)
         )
+        if (isPasswordInvalid) {
+            Text(
+                text = stringResource(R.string.password_too_short),
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(start = 8.dp, top = 4.dp)
+            )
+        }
 
         Spacer(modifier = Modifier.height(16.dp))
 
