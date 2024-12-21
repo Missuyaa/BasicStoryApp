@@ -9,7 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
-import com.dicoding.storyapp.model.Story
+import com.dicoding.storyapp.data.model.Story
 
 @Composable
 fun StoryCard(story: Story, onClick: () -> Unit) {

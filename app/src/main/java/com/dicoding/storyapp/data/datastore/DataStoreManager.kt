@@ -1,6 +1,7 @@
-package com.dicoding.storyapp.data
+package com.dicoding.storyapp.data.datastore
 
 import android.content.Context
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.stringPreferencesKey
@@ -15,45 +16,47 @@ private val Context.dataStore by preferencesDataStore(name = "user_prefs")
 class DataStoreManager(private val context: Context) {
     companion object {
         private val TOKEN_KEY = stringPreferencesKey("token")
+        private val IS_LOGGED_IN_KEY = booleanPreferencesKey("is_logged_in")
     }
 
     fun getToken(): Flow<String?> {
         return context.dataStore.data
             .catch { exception ->
                 if (exception is IOException) {
-                    println("Error reading token from DataStore: ${exception.message}")
                     emit(emptyPreferences())
                 } else {
                     throw exception
                 }
             }
             .map { preferences ->
-                val token = preferences[TOKEN_KEY]
-                println("Token diambil dari DataStore: $token")
-                token
+                preferences[TOKEN_KEY]
+            }
+    }
+
+    fun isLoggedIn(): Flow<Boolean> {
+        return context.dataStore.data
+            .catch { exception ->
+                if (exception is IOException) {
+                    emit(emptyPreferences())
+                } else {
+                    throw exception
+                }
+            }
+            .map { preferences ->
+                preferences[IS_LOGGED_IN_KEY] ?: false
             }
     }
 
     suspend fun saveToken(token: String) {
-        try {
-            context.dataStore.edit { preferences ->
-                preferences[TOKEN_KEY] = token
-            }
-            println("Token berhasil disimpan: $token")
-        } catch (e: Exception) {
-            println("Error saving token: ${e.message}")
+        context.dataStore.edit { preferences ->
+            preferences[TOKEN_KEY] = token
+            preferences[IS_LOGGED_IN_KEY] = true
         }
     }
 
-
     suspend fun clearToken() {
-        try {
-            context.dataStore.edit { preferences ->
-                preferences.clear()
-            }
-            println("Token berhasil dihapus.")
-        } catch (e: Exception) {
-            println("Error clearing token: ${e.message}")
+        context.dataStore.edit { preferences ->
+            preferences.clear()
         }
     }
 }

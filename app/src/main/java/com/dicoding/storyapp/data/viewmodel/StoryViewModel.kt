@@ -1,18 +1,26 @@
-package com.dicoding.storyapp.viewmodel
+package com.dicoding.storyapp.data.viewmodel
 
 import android.content.ContentResolver
 import android.content.Context
 import android.net.Uri
 import android.util.Log
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.liveData
 import androidx.lifecycle.viewModelScope
-import com.dicoding.storyapp.api.ApiClient
-import com.dicoding.storyapp.data.DataStoreManager
-import com.dicoding.storyapp.model.Story
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.cachedIn
+import com.dicoding.storyapp.data.api.ApiClient
+import com.dicoding.storyapp.data.datastore.DataStoreManager
+import com.dicoding.storyapp.data.datastore.StoryPagingSource
+import com.dicoding.storyapp.data.model.Story
+import com.dicoding.storyapp.data.model.StoryResponse
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
@@ -21,7 +29,7 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStream
 
-class StoryViewModel(
+open class StoryViewModel(
     private val dataStoreManager: DataStoreManager,
     private val context: Context
 ) : ViewModel() {
@@ -42,6 +50,48 @@ class StoryViewModel(
 
     private val _isSuccess = MutableStateFlow(false)
     val isSuccess: StateFlow<Boolean> = _isSuccess
+
+
+    val storyPagingData = Pager(
+        config = PagingConfig(
+            pageSize = 10,
+            prefetchDistance = 1,
+            enablePlaceholders = false,
+            initialLoadSize = 10
+        ),
+        pagingSourceFactory = {
+            StoryPagingSource(apiService, token = runBlocking { getToken() ?: "" })
+        }
+    ).flow.cachedIn(viewModelScope)
+
+    fun getStoriesWithLocation(): LiveData<List<Story>> = liveData {
+        try {
+            val token = getToken()
+            if (token.isNullOrEmpty()) {
+                Log.e("StoryViewModel", "Token tidak ditemukan.")
+                emit(emptyList())
+                return@liveData
+            }
+
+            Log.d("StoryViewModel", "Token dikirim: Bearer $token")
+
+            val response = apiService.getStoriesWithLocation(
+                token = "Bearer $token",
+                location = "1"
+            )
+
+            if (response.listStory.isNotEmpty()) {
+                Log.d("StoryViewModel", "Jumlah cerita dengan lokasi: ${response.listStory.size}")
+                emit(response.listStory)
+            } else {
+                Log.d("StoryViewModel", "Tidak ada cerita dengan lokasi yang diterima.")
+                emit(emptyList())
+            }
+        } catch (e: Exception) {
+            Log.e("StoryViewModel", "Terjadi kesalahan: ${e.message}")
+            emit(emptyList())
+        }
+    }
 
     init {
         viewModelScope.launch {
@@ -65,7 +115,7 @@ class StoryViewModel(
         return dataStoreManager.getToken().firstOrNull()
     }
 
-    fun fetchStories() {
+    fun fetchStories(page: Int = 1, size: Int = 10) {
         viewModelScope.launch {
             _isLoading.value = true
             val token = getToken()
@@ -77,25 +127,31 @@ class StoryViewModel(
             }
 
             try {
-                val response = apiService.getStories("Bearer $token")
+                Log.d("StoryViewModel", "Fetching stories with token: $token")
+                val response = apiService.getStories("Bearer $token", page, size)
                 if (response.isSuccessful) {
                     val storyResponse = response.body()
                     if (storyResponse != null && !storyResponse.error) {
                         _stories.value = storyResponse.listStory
+                        Log.d("StoryViewModel", "Fetched stories: ${storyResponse.listStory.size}")
                         _errorMessage.value = null
                     } else {
                         _errorMessage.value = storyResponse?.message ?: "Gagal memuat cerita."
+                        Log.e("StoryViewModel", "Error: ${_errorMessage.value}")
                     }
                 } else {
                     _errorMessage.value = "Gagal memuat cerita: ${response.message()}"
+                    Log.e("StoryViewModel", "Error: ${response.message()}")
                 }
             } catch (e: Exception) {
                 _errorMessage.value = "Terjadi kesalahan: ${e.message}"
+                Log.e("StoryViewModel", "Exception: ${e.message}")
             } finally {
                 _isLoading.value = false
             }
         }
     }
+
 
     fun fetchStoryDetail(storyId: String) {
         viewModelScope.launch {
@@ -144,7 +200,13 @@ class StoryViewModel(
         return tempFile
     }
 
-    fun uploadStoryWithImage(description: String, imageUri: Uri, onComplete: (Boolean) -> Unit) {
+    fun uploadStoryWithImage(
+        description: String,
+        imageUri: Uri,
+        lat: Double?,
+        lon: Double?,
+        onComplete: (Boolean) -> Unit
+    ) {
         viewModelScope.launch {
             _isLoading.value = true
             val token = getToken()
@@ -163,11 +225,15 @@ class StoryViewModel(
                     "photo", imageFile.name, requestImageFile
                 )
                 val descriptionRequestBody = description.toRequestBody("text/plain".toMediaType())
+                val latRequestBody = lat?.toString()?.toRequestBody("text/plain".toMediaType())
+                val lonRequestBody = lon?.toString()?.toRequestBody("text/plain".toMediaType())
 
                 val response = apiService.addStoryWithImage(
                     token = "Bearer $token",
                     file = imageMultipart,
-                    description = descriptionRequestBody
+                    description = descriptionRequestBody,
+                    lat = latRequestBody,
+                    lon = lonRequestBody
                 )
 
                 if (response.isSuccessful) {
@@ -187,5 +253,5 @@ class StoryViewModel(
             }
         }
     }
-
 }
+

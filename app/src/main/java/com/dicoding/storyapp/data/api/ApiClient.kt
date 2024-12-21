@@ -1,4 +1,4 @@
-package com.dicoding.storyapp.api
+package com.dicoding.storyapp.data.api
 
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory

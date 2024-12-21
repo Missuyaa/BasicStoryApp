@@ -1,9 +1,9 @@
-package com.dicoding.storyapp.viewmodel
+package com.dicoding.storyapp.data.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.dicoding.storyapp.api.ApiClient
-import com.dicoding.storyapp.data.DataStoreManager
+import com.dicoding.storyapp.data.api.ApiClient
+import com.dicoding.storyapp.data.datastore.DataStoreManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -16,13 +16,10 @@ class AuthViewModel(private val dataStoreManager: DataStoreManager) : ViewModel(
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> get() = _errorMessage
 
-    private val _isLoggedIn = MutableStateFlow(false)
-    val isLoggedIn: StateFlow<Boolean> get() = _isLoggedIn
-
+    val isLoggedIn = dataStoreManager.isLoggedIn()
 
     fun login(email: String, password: String, onResult: (Boolean) -> Unit) {
         viewModelScope.launch {
-            _isLoading.value = true
             try {
                 val credentials = mapOf("email" to email, "password" to password)
                 val response = ApiClient.apiService.login(credentials)
@@ -31,22 +28,15 @@ class AuthViewModel(private val dataStoreManager: DataStoreManager) : ViewModel(
                     val token = response.body()?.loginResult?.token
                     if (!token.isNullOrEmpty()) {
                         dataStoreManager.saveToken(token)
-                        _isLoggedIn.value = true
-                        _errorMessage.value = null
                         onResult(true)
                     } else {
-                        _errorMessage.value = "Login gagal: Token tidak valid."
                         onResult(false)
                     }
                 } else {
-                    _errorMessage.value = "Login gagal: ${response.message()}"
                     onResult(false)
                 }
             } catch (e: Exception) {
-                _errorMessage.value = "Terjadi kesalahan: ${e.message}"
                 onResult(false)
-            } finally {
-                _isLoading.value = false
             }
         }
     }
@@ -87,7 +77,6 @@ class AuthViewModel(private val dataStoreManager: DataStoreManager) : ViewModel(
     fun logout() {
         viewModelScope.launch {
             dataStoreManager.clearToken()
-            _isLoggedIn.value = false // Set status login ke false saat logout
         }
     }
 }

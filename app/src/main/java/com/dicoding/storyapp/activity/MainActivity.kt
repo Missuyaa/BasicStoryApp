@@ -10,13 +10,13 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.dicoding.storyapp.data.DataStoreManager
+import com.dicoding.storyapp.data.datastore.DataStoreManager
 import com.dicoding.storyapp.ui.StoryAppTheme
 import com.dicoding.storyapp.ui.screens.*
-import com.dicoding.storyapp.viewmodel.AuthViewModel
-import com.dicoding.storyapp.viewmodel.AuthViewModelFactory
-import com.dicoding.storyapp.viewmodel.StoryViewModel
-import com.dicoding.storyapp.viewmodel.StoryViewModelFactory
+import com.dicoding.storyapp.data.viewmodel.AuthViewModel
+import com.dicoding.storyapp.data.viewmodel.AuthViewModelFactory
+import com.dicoding.storyapp.data.viewmodel.StoryViewModel
+import com.dicoding.storyapp.data.viewmodel.StoryViewModelFactory
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -36,7 +36,7 @@ class MainActivity : ComponentActivity() {
 fun StoryApp(authViewModel: AuthViewModel, storyViewModel: StoryViewModel) {
     StoryAppTheme {
         val navController = rememberNavController()
-        val isLoggedIn by authViewModel.isLoggedIn.collectAsState() // Status login dari ViewModel
+        val isLoggedIn by authViewModel.isLoggedIn.collectAsState(initial = false)
 
         NavHost(
             navController = navController,

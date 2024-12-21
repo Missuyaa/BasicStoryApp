@@ -1,4 +1,4 @@
-package com.dicoding.storyapp.model
+package com.dicoding.storyapp.data.model
 
 data class StoryResponseWrapper(
     val error: Boolean,

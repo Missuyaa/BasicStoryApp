@@ -13,11 +13,7 @@ class CustomEditText @JvmOverloads constructor(
     defStyleAttr: Int = 0
 ) : AppCompatEditText(context, attrs, defStyleAttr) {
 
-    // Callback untuk mengirim status validasi ke luar
-    var onValidationChanged: ((Boolean) -> Unit)? = null
-
     init {
-        // Tambahkan listener untuk memantau perubahan teks
         addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
 
@@ -29,10 +25,9 @@ class CustomEditText @JvmOverloads constructor(
         })
     }
 
-    // Fungsi untuk memvalidasi password
     private fun validatePassword(input: String) {
         if (input.length < 8) {
-            error = context.getString(R.string.password_too_short) // Pastikan resource string tersedia
+            error = context.getString(R.string.password_too_short)
         } else {
             error = null
         }

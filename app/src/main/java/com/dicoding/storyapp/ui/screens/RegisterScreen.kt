@@ -5,11 +5,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.dicoding.storyapp.edittext.CustomEditText
-import com.dicoding.storyapp.viewmodel.AuthViewModel
+import com.dicoding.storyapp.data.viewmodel.AuthViewModel
 
 
 @Composable
@@ -20,6 +19,7 @@ fun RegisterScreen(
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var isPasswordVisible by remember { mutableStateOf(false) }
     var isPasswordValid by remember { mutableStateOf(false) }
 
     val isLoading by authViewModel.isLoading.collectAsState()
@@ -42,8 +42,7 @@ fun RegisterScreen(
             value = name,
             onValueChange = { name = it },
             label = { Text("Name") },
-            modifier = Modifier.fillMaxWidth(),
-            isError = name.isEmpty() && !isLoading
+            modifier = Modifier.fillMaxWidth()
         )
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -51,29 +50,28 @@ fun RegisterScreen(
             value = email,
             onValueChange = { email = it },
             label = { Text("Email") },
-            modifier = Modifier.fillMaxWidth(),
-            isError = email.isEmpty() && !isLoading
+            modifier = Modifier.fillMaxWidth()
         )
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Custom EditText for Password
         AndroidView(
             factory = { context ->
                 CustomEditText(context).apply {
                     hint = "Password"
+                    inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
                     isFocusable = true
                     isFocusableInTouchMode = true
                 }
             },
             modifier = Modifier.fillMaxWidth(),
             update = { view ->
-                // Jangan panggil setText jika tidak diperlukan
-                if (view.text.toString() != password) {
-                    view.setText(password)
-                    view.setSelection(password.length)
+                view.inputType = if (isPasswordVisible) {
+                    android.text.InputType.TYPE_CLASS_TEXT
+                } else {
+                    android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
                 }
+                view.setSelection(password.length)
 
-                // Tambahkan listener untuk sinkronisasi password
                 view.addTextChangedListener(object : android.text.TextWatcher {
                     override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
                     override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
@@ -81,13 +79,21 @@ fun RegisterScreen(
                     }
                     override fun afterTextChanged(s: android.text.Editable?) {}
                 })
-
-                // Validasi password melalui callback
-                view.onValidationChanged = { isValid ->
-                    isPasswordValid = isValid
-                }
             }
         )
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(end = 16.dp),
+            horizontalArrangement = Arrangement.End
+        ) {
+            TextButton(onClick = { isPasswordVisible = !isPasswordVisible }) {
+                Text(text = if (isPasswordVisible) "Hide" else "Show")
+            }
+        }
+
+
         Spacer(modifier = Modifier.height(16.dp))
 
         Button(

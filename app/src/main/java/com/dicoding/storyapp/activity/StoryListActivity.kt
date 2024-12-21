@@ -12,9 +12,9 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.dicoding.storyapp.R
 import com.dicoding.storyapp.adapter.StoryAdapter
-import com.dicoding.storyapp.data.DataStoreManager
-import com.dicoding.storyapp.viewmodel.StoryViewModel
-import com.dicoding.storyapp.viewmodel.StoryViewModelFactory
+import com.dicoding.storyapp.data.datastore.DataStoreManager
+import com.dicoding.storyapp.data.viewmodel.StoryViewModel
+import com.dicoding.storyapp.data.viewmodel.StoryViewModelFactory
 import kotlinx.coroutines.launch
 
 class StoryListActivity : AppCompatActivity() {
@@ -28,7 +28,6 @@ class StoryListActivity : AppCompatActivity() {
         val recyclerView = findViewById<RecyclerView>(R.id.rv_stories)
         recyclerView.layoutManager = LinearLayoutManager(this)
 
-        // Inisialisasi StoryViewModel menggunakan Factory
         val dataStoreManager = DataStoreManager(applicationContext)
         storyViewModel = ViewModelProvider(
             this,
@@ -61,5 +60,27 @@ class StoryListActivity : AppCompatActivity() {
 
         storyViewModel.fetchStories()
     }
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.menu_story_list, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.action_logout -> {
+                // Handle Logout
+                Toast.makeText(this, "Logout berhasil!", Toast.LENGTH_SHORT).show()
+                true
+            }
+            R.id.menu_open_maps -> {
+                // Navigasi ke MapsActivity
+                val intent = Intent(this, MapsActivity::class.java)
+                startActivity(intent)
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
+    }
+
 }
 

@@ -16,7 +16,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.dicoding.storyapp.animations.AnimatedButton
-import com.dicoding.storyapp.viewmodel.StoryViewModel
+import com.dicoding.storyapp.data.viewmodel.StoryViewModel
 
 @Composable
 fun AddStoryScreen(
@@ -24,6 +24,8 @@ fun AddStoryScreen(
     storyViewModel: StoryViewModel
 ) {
     var description by remember { mutableStateOf("") }
+    var latitude by remember { mutableStateOf("") } // Tambahkan input untuk latitude
+    var longitude by remember { mutableStateOf("") } // Tambahkan input untuk longitude
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     val galleryLauncher = rememberLauncherForActivityResult(
@@ -66,6 +68,7 @@ fun AddStoryScreen(
         }
 
         Spacer(modifier = Modifier.height(16.dp))
+
         BasicTextField(
             value = description,
             onValueChange = { description = it },
@@ -85,6 +88,49 @@ fun AddStoryScreen(
         )
 
         Spacer(modifier = Modifier.height(16.dp))
+
+        // Input untuk Latitude
+        BasicTextField(
+            value = latitude,
+            onValueChange = { latitude = it },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(50.dp)
+                .background(Color.LightGray)
+                .padding(8.dp),
+            decorationBox = { innerTextField ->
+                Box {
+                    if (latitude.isEmpty()) {
+                        Text("Masukkan Latitude", color = Color.Gray)
+                    }
+                    innerTextField()
+                }
+            }
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Input untuk Longitude
+        BasicTextField(
+            value = longitude,
+            onValueChange = { longitude = it },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(50.dp)
+                .background(Color.LightGray)
+                .padding(8.dp),
+            decorationBox = { innerTextField ->
+                Box {
+                    if (longitude.isEmpty()) {
+                        Text("Masukkan Longitude", color = Color.Gray)
+                    }
+                    innerTextField()
+                }
+            }
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
         AnimatedButton(
             onClick = {
                 if (selectedImageUri == null) {
@@ -97,10 +143,20 @@ fun AddStoryScreen(
                     return@AnimatedButton
                 }
 
+                val lat = latitude.toDoubleOrNull()
+                val lon = longitude.toDoubleOrNull()
+
+                if (lat == null || lon == null) {
+                    errorMessage = "Latitude dan Longitude harus berupa angka."
+                    return@AnimatedButton
+                }
+
                 selectedImageUri?.let { uri ->
                     storyViewModel.uploadStoryWithImage(
                         description = description,
                         imageUri = uri,
+                        lat = lat,
+                        lon = lon,
                         onComplete = { success ->
                             if (success) {
                                 navController.navigate("story_list") {
@@ -122,4 +178,3 @@ fun AddStoryScreen(
         }
     }
 }
-

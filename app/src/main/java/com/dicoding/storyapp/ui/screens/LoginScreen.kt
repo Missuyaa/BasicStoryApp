@@ -9,7 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import com.dicoding.storyapp.viewmodel.AuthViewModel
+import com.dicoding.storyapp.data.viewmodel.AuthViewModel
 import com.dicoding.storyapp.R
 
 @Composable
@@ -34,14 +34,12 @@ fun LoginScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        // Judul Halaman Login
         Text(
             text = stringResource(R.string.login),
             style = MaterialTheme.typography.headlineSmall,
             modifier = Modifier.padding(bottom = 16.dp)
         )
 
-        // Input Email
         AndroidView(
             factory = { context ->
                 AppCompatEditText(context).apply {
@@ -76,7 +74,6 @@ fun LoginScreen(
             )
         }
 
-        // Input Password
         AndroidView(
             factory = { context ->
                 AppCompatEditText(context).apply {

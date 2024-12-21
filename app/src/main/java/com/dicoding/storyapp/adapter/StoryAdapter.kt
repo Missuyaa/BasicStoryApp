@@ -12,7 +12,7 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.dicoding.storyapp.R
-import com.dicoding.storyapp.model.Story
+import com.dicoding.storyapp.data.model.Story
 import com.dicoding.storyapp.activity.StoryDetailActivity
 
 class StoryAdapter(private val stories: List<Story>, private val context: Context) :

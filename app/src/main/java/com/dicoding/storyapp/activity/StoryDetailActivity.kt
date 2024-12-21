@@ -10,10 +10,9 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
 import com.dicoding.storyapp.R
-import com.dicoding.storyapp.data.DataStoreManager
-import com.dicoding.storyapp.viewmodel.StoryViewModel
-import com.dicoding.storyapp.viewmodel.StoryViewModelFactory
-import kotlinx.coroutines.flow.collect
+import com.dicoding.storyapp.data.datastore.DataStoreManager
+import com.dicoding.storyapp.data.viewmodel.StoryViewModel
+import com.dicoding.storyapp.data.viewmodel.StoryViewModelFactory
 import kotlinx.coroutines.launch
 
 class StoryDetailActivity : AppCompatActivity() {
@@ -22,7 +21,6 @@ class StoryDetailActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Setup shared element transition
         window.sharedElementEnterTransition = TransitionInflater.from(this)
             .inflateTransition(android.R.transition.move)
         window.sharedElementExitTransition = TransitionInflater.from(this)
@@ -89,7 +87,6 @@ class StoryDetailActivity : AppCompatActivity() {
     }
 
     private fun showLoading(isLoading: Boolean) {
-        // Anda dapat menambahkan progress bar di layout dan mengelola visibilitasnya
         if (isLoading) {
             Toast.makeText(this, "Loading...", Toast.LENGTH_SHORT).show()
         } else {

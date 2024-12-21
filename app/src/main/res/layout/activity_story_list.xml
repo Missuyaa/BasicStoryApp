@@ -7,11 +7,14 @@
     android:layout_height="match_parent"
     tools:context=".activity.StoryListActivity">
 
+
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rv_stories"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
         tools:listitem="@layout/item_story" />
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

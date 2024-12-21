@@ -11,7 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
 import com.bumptech.glide.Glide
 import com.dicoding.storyapp.R
-import com.dicoding.storyapp.viewmodel.StoryViewModel
+import com.dicoding.storyapp.data.viewmodel.StoryViewModel
 
 @Composable
 fun StoryDetailScreen(
