@@ -8,7 +8,6 @@
     android:background="@color/white"
     tools:context=".activity.LoginActivity">
 
-
     <TextView
         android:id="@+id/tv_login_title"
         android:layout_width="wrap_content"
@@ -22,7 +21,6 @@
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginTop="200dp" />
 
-        <!-- Input Email -->
     <EditText
         android:id="@+id/ed_login_email"
         android:layout_width="0dp"
@@ -37,13 +35,13 @@
         android:layout_marginStart="32dp"
         android:layout_marginEnd="32dp" />
 
-        <!-- Input Password -->
-    <EditText
+    <com.dicoding.storyapp.edittext.CustomEditText
         android:id="@+id/ed_login_password"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:hint="Password"
         android:inputType="textPassword"
+        android:minHeight="48dp"
         android:padding="12dp"
         app:layout_constraintTop_toBottomOf="@id/ed_login_email"
         app:layout_constraintStart_toStartOf="parent"
@@ -52,7 +50,6 @@
         android:layout_marginStart="32dp"
         android:layout_marginEnd="32dp" />
 
-        <!-- Tombol Login -->
     <Button
         android:id="@+id/btn_login"
         android:layout_width="0dp"
@@ -67,7 +64,6 @@
         android:layout_marginStart="32dp"
         android:layout_marginEnd="32dp" />
 
-    <!-- Teks untuk Register -->
     <TextView
         android:id="@+id/tv_register"
         android:layout_width="wrap_content"

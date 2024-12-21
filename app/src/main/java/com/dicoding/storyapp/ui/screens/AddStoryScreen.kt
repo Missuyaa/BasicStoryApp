@@ -1,66 +1,180 @@
 package com.dicoding.storyapp.ui.screens
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavHostController
-import com.dicoding.storyapp.viewmodel.StoryViewModel
+import androidx.navigation.NavController
+import coil.compose.AsyncImage
+import com.dicoding.storyapp.animations.AnimatedButton
+import com.dicoding.storyapp.data.viewmodel.StoryViewModel
 
 @Composable
 fun AddStoryScreen(
-    navController: NavHostController,
-    storyViewModel: StoryViewModel = viewModel()
+    navController: NavController,
+    storyViewModel: StoryViewModel
 ) {
-    // State untuk deskripsi cerita dan error
     var description by remember { mutableStateOf("") }
-    val isLoading by storyViewModel.isLoading.collectAsState()
-    val errorMessage by storyViewModel.error.collectAsState()
+    var latitude by remember { mutableStateOf("") } // Tambahkan input untuk latitude
+    var longitude by remember { mutableStateOf("") } // Tambahkan input untuk longitude
+    var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    val galleryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent(),
+        onResult = { uri ->
+            selectedImageUri = uri
+            errorMessage = if (uri == null) "Gagal memilih gambar" else null
+        }
+    )
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Input untuk deskripsi cerita
-        TextField(
+        selectedImageUri?.let { uri ->
+            AsyncImage(
+                model = uri,
+                contentDescription = "Selected Image",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp)
+                    .padding(bottom = 16.dp)
+            )
+        } ?: Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(200.dp)
+                .background(Color.Gray),
+            contentAlignment = Alignment.Center
+        ) {
+            Text("Pilih Foto", color = Color.White, textAlign = TextAlign.Center)
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Button(onClick = { galleryLauncher.launch("image/*") }) {
+            Text("Pilih Foto")
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        BasicTextField(
             value = description,
             onValueChange = { description = it },
-            label = { Text("Deskripsi Cerita") },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(100.dp)
+                .background(Color.LightGray)
+                .padding(8.dp),
+            decorationBox = { innerTextField ->
+                Box {
+                    if (description.isEmpty()) {
+                        Text("Deskripsi cerita", color = Color.Gray)
+                    }
+                    innerTextField()
+                }
+            }
         )
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Tombol upload cerita
-        Button(
-            onClick = {
-                storyViewModel.uploadStory(description) { success ->
-                    if (success) {
-                        navController.navigate("story_list")
+        // Input untuk Latitude
+        BasicTextField(
+            value = latitude,
+            onValueChange = { latitude = it },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(50.dp)
+                .background(Color.LightGray)
+                .padding(8.dp),
+            decorationBox = { innerTextField ->
+                Box {
+                    if (latitude.isEmpty()) {
+                        Text("Masukkan Latitude", color = Color.Gray)
                     }
+                    innerTextField()
+                }
+            }
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Input untuk Longitude
+        BasicTextField(
+            value = longitude,
+            onValueChange = { longitude = it },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(50.dp)
+                .background(Color.LightGray)
+                .padding(8.dp),
+            decorationBox = { innerTextField ->
+                Box {
+                    if (longitude.isEmpty()) {
+                        Text("Masukkan Longitude", color = Color.Gray)
+                    }
+                    innerTextField()
+                }
+            }
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        AnimatedButton(
+            onClick = {
+                if (selectedImageUri == null) {
+                    errorMessage = "Silakan pilih gambar terlebih dahulu."
+                    return@AnimatedButton
+                }
+
+                if (description.isEmpty()) {
+                    errorMessage = "Deskripsi tidak boleh kosong."
+                    return@AnimatedButton
+                }
+
+                val lat = latitude.toDoubleOrNull()
+                val lon = longitude.toDoubleOrNull()
+
+                if (lat == null || lon == null) {
+                    errorMessage = "Latitude dan Longitude harus berupa angka."
+                    return@AnimatedButton
+                }
+
+                selectedImageUri?.let { uri ->
+                    storyViewModel.uploadStoryWithImage(
+                        description = description,
+                        imageUri = uri,
+                        lat = lat,
+                        lon = lon,
+                        onComplete = { success ->
+                            if (success) {
+                                navController.navigate("story_list") {
+                                    popUpTo("add_story") { inclusive = true }
+                                }
+                            } else {
+                                errorMessage = "Gagal mengunggah cerita."
+                            }
+                        }
+                    )
                 }
             },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text(text = "Upload Cerita")
-        }
+            text = "Unggah Cerita"
+        )
 
-        // Loading indicator
-        if (isLoading) {
+        errorMessage?.let {
             Spacer(modifier = Modifier.height(16.dp))
-            CircularProgressIndicator()
-        }
-
-        // Pesan error
-        errorMessage?.let { error ->
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(text = "Error: $error", color = MaterialTheme.colorScheme.error)
+            Text(text = it, color = Color.Red)
         }
     }
 }

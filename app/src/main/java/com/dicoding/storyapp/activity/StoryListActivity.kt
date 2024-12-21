@@ -6,18 +6,21 @@ import android.view.Menu
 import android.view.MenuItem
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.dicoding.storyapp.R
 import com.dicoding.storyapp.adapter.StoryAdapter
-import com.dicoding.storyapp.api.ApiService
-import com.dicoding.storyapp.model.Story
+import com.dicoding.storyapp.data.datastore.DataStoreManager
+import com.dicoding.storyapp.data.viewmodel.StoryViewModel
+import com.dicoding.storyapp.data.viewmodel.StoryViewModelFactory
 import kotlinx.coroutines.launch
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
 
 class StoryListActivity : AppCompatActivity() {
+
+    private lateinit var storyViewModel: StoryViewModel
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_story_list)
@@ -25,21 +28,38 @@ class StoryListActivity : AppCompatActivity() {
         val recyclerView = findViewById<RecyclerView>(R.id.rv_stories)
         recyclerView.layoutManager = LinearLayoutManager(this)
 
-        // Ambil token dari SharedPreferences
-        val sharedPreferences = getSharedPreferences("StoryAppPrefs", MODE_PRIVATE)
-        val token = sharedPreferences.getString("token", null)
+        val dataStoreManager = DataStoreManager(applicationContext)
+        storyViewModel = ViewModelProvider(
+            this,
+            StoryViewModelFactory(dataStoreManager, this)
+        )[StoryViewModel::class.java]
 
-        if (token != null) {
-            fetchStories(token) { stories ->
-                val adapter = StoryAdapter(stories, this)
-                recyclerView.adapter = adapter
+        lifecycleScope.launchWhenStarted {
+            launch {
+                storyViewModel.stories.collect { stories ->
+                    recyclerView.adapter = StoryAdapter(stories, this@StoryListActivity)
+                }
             }
-        } else {
-            Toast.makeText(this, "Token tidak ditemukan. Harap login ulang.", Toast.LENGTH_SHORT).show()
-            finish()
-        }
-    }
 
+            launch {
+                storyViewModel.isLoading.collect { isLoading ->
+                    if (isLoading) {
+                        Toast.makeText(this@StoryListActivity, "Loading...", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+
+            launch {
+                storyViewModel.errorMessage.collect { errorMessage ->
+                    errorMessage?.let {
+                        Toast.makeText(this@StoryListActivity, it, Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        }
+
+        storyViewModel.fetchStories()
+    }
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.menu_story_list, menu)
         return true
@@ -48,52 +68,19 @@ class StoryListActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             R.id.action_logout -> {
-                logout()
+                // Handle Logout
+                Toast.makeText(this, "Logout berhasil!", Toast.LENGTH_SHORT).show()
+                true
+            }
+            R.id.menu_open_maps -> {
+                // Navigasi ke MapsActivity
+                val intent = Intent(this, MapsActivity::class.java)
+                startActivity(intent)
                 true
             }
             else -> super.onOptionsItemSelected(item)
         }
     }
 
-    private fun logout() {
-        val sharedPreferences = getSharedPreferences("StoryAppPrefs", MODE_PRIVATE)
-        sharedPreferences.edit().clear().apply()
-        Toast.makeText(this, "Logout berhasil!", Toast.LENGTH_SHORT).show()
-        startActivity(Intent(this, LoginActivity::class.java))
-        finish()
-    }
-
-    private fun fetchStories(token: String, callback: (List<Story>) -> Unit) {
-        val retrofit = Retrofit.Builder()
-            .baseUrl("https://story-api.dicoding.dev/v1/") // Ganti dengan URL API Anda
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-        val apiService = retrofit.create(ApiService::class.java)
-
-        lifecycleScope.launch {
-            try {
-                val response = apiService.getStories("Bearer $token")
-                if (response.isSuccessful) {
-                    val storyResponse = response.body()
-                    if (storyResponse != null && !storyResponse.error) {
-                        callback(storyResponse.listStory)
-                    } else {
-                        Toast.makeText(
-                            this@StoryListActivity,
-                            storyResponse?.message ?: "Gagal memuat cerita",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    }
-                } else {
-                    Toast.makeText(
-                        this@StoryListActivity,
-                        "Error: ${response.message()}",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-            } catch (e: Exception) {
-                Toast.makeText(this@StoryListActivity, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
-            }
-        }
-    }
 }
+

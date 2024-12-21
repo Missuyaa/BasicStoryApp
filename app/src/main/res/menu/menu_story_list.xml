@@ -6,4 +6,10 @@
         android:title="Logout"
         android:icon="@drawable/ic_logout"
         app:showAsAction="always" />
+
+    <item
+        android:id="@+id/menu_open_maps"
+        android:title="Lihat Peta"
+        android:icon="@drawable/ic_map"
+        app:showAsAction="ifRoom" />
 </menu>

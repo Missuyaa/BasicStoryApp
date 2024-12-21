@@ -2,86 +2,51 @@ package com.dicoding.storyapp.activity
 
 import android.content.Intent
 import android.os.Bundle
-import android.widget.Button
-import android.widget.EditText
-import android.widget.TextView
-import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.lifecycleScope
-import com.dicoding.storyapp.R
-import com.dicoding.storyapp.api.ApiService
-import com.dicoding.storyapp.model.LoginResponse
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.dicoding.storyapp.data.datastore.DataStoreManager
+import com.dicoding.storyapp.ui.StoryAppTheme
+import com.dicoding.storyapp.ui.screens.LoginScreen
+import com.dicoding.storyapp.data.viewmodel.AuthViewModel
+import com.dicoding.storyapp.data.viewmodel.AuthViewModelFactory
 
-class LoginActivity : AppCompatActivity() {
-
-    private fun login(email: String, password: String) {
-        val retrofit = Retrofit.Builder()
-            .baseUrl("https://story-api.dicoding.dev/v1/") // Base URL yang diperbarui
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-        val apiService = retrofit.create(ApiService::class.java)
-
-        val credentials = mapOf(
-            "email" to email,
-            "password" to password
-        )
-
-        // Gunakan coroutine untuk memanggil suspend function
-        lifecycleScope.launch(Dispatchers.IO) {
-            try {
-                val response: LoginResponse = apiService.login(credentials)
-                withContext(Dispatchers.Main) {
-                    if (!response.error) {
-                        saveSession(response.token)
-                        Toast.makeText(this@LoginActivity, "Login berhasil!", Toast.LENGTH_SHORT).show()
-                        startActivity(Intent(this@LoginActivity, StoryListActivity::class.java))
-                        finish()
-                    } else {
-                        Toast.makeText(this@LoginActivity, response.message, Toast.LENGTH_SHORT).show()
-                    }
-                }
-            } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(this@LoginActivity, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
-                }
-            }
-        }
-    }
-
-    private fun saveSession(token: String?) {
-        val sharedPreferences = getSharedPreferences("StoryAppPrefs", MODE_PRIVATE)
-        sharedPreferences.edit().putString("token", token).apply()
-    }
+class LoginActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_login)
 
-        val emailEditText = findViewById<EditText>(R.id.ed_login_email)
-        val passwordEditText = findViewById<EditText>(R.id.ed_login_password)
-        val loginButton = findViewById<Button>(R.id.btn_login)
-        val registerTextView = findViewById<TextView>(R.id.tv_register)
+        val dataStoreManager = DataStoreManager(applicationContext)
 
-        loginButton.setOnClickListener {
-            val email = emailEditText.text.toString().trim()
-            val password = passwordEditText.text.toString().trim()
+        val sharedPref = getSharedPreferences("user_session", MODE_PRIVATE)
+        val token = sharedPref.getString("TOKEN", null)
 
-            if (email.isEmpty() || password.isEmpty()) {
-                Toast.makeText(this, "Email dan password harus diisi!", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
+
+
+        if (token != null) {
+            startActivity(Intent(this, MainActivity::class.java))
+            finish()
+        } else {
+            setContent {
+                val authViewModel: AuthViewModel =
+                    viewModel(factory = AuthViewModelFactory(dataStoreManager))
+
+                StoryAppTheme {
+                    LoginScreen(
+                        onLoginSuccess = {
+                            sharedPref.edit().putString("TOKEN", token).apply()
+
+                            startActivity(Intent(this, MainActivity::class.java))
+                            finish()
+                        },
+                        onRegisterClick = {
+                            startActivity(Intent(this, RegisterActivity::class.java))
+                        },
+                        authViewModel = authViewModel
+                    )
+                }
             }
-
-            login(email, password)
-        }
-
-        // Navigasi ke halaman registrasi
-        registerTextView.setOnClickListener {
-            startActivity(Intent(this, RegisterActivity::class.java))
         }
     }
 }
+

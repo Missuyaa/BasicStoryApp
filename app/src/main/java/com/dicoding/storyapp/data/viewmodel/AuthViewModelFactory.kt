@@ -1,9 +1,8 @@
-package com.dicoding.storyapp.viewmodel
+package com.dicoding.storyapp.data.viewmodel
 
-import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import com.dicoding.storyapp.data.DataStoreManager
+import com.dicoding.storyapp.data.datastore.DataStoreManager
 
 class AuthViewModelFactory(private val dataStoreManager: DataStoreManager) :
     ViewModelProvider.Factory {

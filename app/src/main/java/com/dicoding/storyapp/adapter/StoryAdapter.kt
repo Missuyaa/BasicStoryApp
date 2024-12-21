@@ -1,5 +1,7 @@
 package com.dicoding.storyapp.adapter
 
+import android.app.Activity
+import android.app.ActivityOptions
 import android.content.Context
 import android.content.Intent
 import android.view.LayoutInflater
@@ -10,7 +12,7 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.dicoding.storyapp.R
-import com.dicoding.storyapp.model.Story
+import com.dicoding.storyapp.data.model.Story
 import com.dicoding.storyapp.activity.StoryDetailActivity
 
 class StoryAdapter(private val stories: List<Story>, private val context: Context) :
@@ -32,20 +34,26 @@ class StoryAdapter(private val stories: List<Story>, private val context: Contex
         holder.nameTextView.text = story.name
         holder.descriptionTextView.text = story.description
 
-        // Muat gambar menggunakan Glide
         Glide.with(context)
             .load(story.photoUrl)
             .into(holder.photoImageView)
 
-        // Klik listener untuk membuka halaman detail
         holder.itemView.setOnClickListener {
             val intent = Intent(context, StoryDetailActivity::class.java)
             intent.putExtra("name", story.name)
             intent.putExtra("photoUrl", story.photoUrl)
             intent.putExtra("description", story.description)
-            context.startActivity(intent)
+
+            val options = ActivityOptions.makeSceneTransitionAnimation(
+                context as Activity,
+                holder.photoImageView,
+                "story_image"
+            )
+
+            context.startActivity(intent, options.toBundle())
         }
     }
+
 
     override fun getItemCount(): Int = stories.size
 }

@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+<manifest
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
 
     <application
         android:allowBackup="true"
@@ -13,16 +17,33 @@
         android:theme="@style/Theme.StoryApp"
         tools:targetApi="31">
 
-        <!-- Main Entry Point -->
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyACQnpvMd7ZimZgZoAAMII25yrzYPlUCO4" />
+
         <activity
-            android:name=".activity.LoginActivity"
+            android:name="com.dicoding.storyapp.activity.RegisterActivity"
             android:exported="true"
             android:label="@string/app_name"
-            android:theme="@style/Theme.StoryApp">
+            android:theme="@style/Theme.StoryApp" />
+
+        <activity
+            android:name="com.dicoding.storyapp.activity.LoginActivity"
+            android:enabled="false"
+            android:exported="true"
+            android:label="@string/app_name" />
+
+        <activity
+            android:name="com.dicoding.storyapp.activity.MainActivity"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:theme="@style/Theme.StoryApp" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <activity android:name=".activity.MapsActivity" />
     </application>
 </manifest>

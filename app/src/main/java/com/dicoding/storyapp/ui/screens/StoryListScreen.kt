@@ -1,114 +1,158 @@
 package com.dicoding.storyapp.ui.screens
 
+import android.content.Intent
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
-import coil.compose.AsyncImage
-import com.dicoding.storyapp.model.Story
-import com.dicoding.storyapp.viewmodel.AuthViewModel
-import com.dicoding.storyapp.viewmodel.AuthViewModelFactory
-import com.dicoding.storyapp.viewmodel.StoryViewModel
-import com.dicoding.storyapp.viewmodel.StoryViewModelFactory
+import androidx.paging.compose.collectAsLazyPagingItems
+import com.dicoding.storyapp.activity.MapsActivity
+import com.dicoding.storyapp.animations.AnimatedButton
+import com.dicoding.storyapp.ui.components.StoryCard
+import com.dicoding.storyapp.data.viewmodel.AuthViewModel
+import com.dicoding.storyapp.data.viewmodel.StoryViewModel
+import com.dicoding.storyapp.R
 
-
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StoryListScreen(
     navController: NavHostController,
-    storyViewModel: StoryViewModel = viewModel(factory = StoryViewModelFactory(LocalContext.current)),
-    authViewModel: AuthViewModel = viewModel(factory = AuthViewModelFactory(LocalContext.current))
+    storyViewModel: StoryViewModel,
+    authViewModel: AuthViewModel
 ) {
-    // Collect state dari ViewModel
-    val stories by storyViewModel.stories.collectAsState()
-    val isLoading by storyViewModel.isLoading.collectAsState()
-    val errorMessage by storyViewModel.errorMessage.collectAsState()
+    val storyPagingItems = storyViewModel.storyPagingData.collectAsLazyPagingItems()
+    val listState = rememberLazyListState()
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Top
-    ) {
-        // Header dan tombol logout
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "Daftar Cerita",
-                style = MaterialTheme.typography.headlineSmall
-            )
-            Button(onClick = {
-                authViewModel.logout()
-                navController.navigate("login") {
-                    popUpTo(0) { inclusive = true } // Bersihkan backstack
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Daftar Cerita") },
+                actions = {
+                    IconButton(onClick = {
+                        navController.context.startActivity(
+                            Intent(navController.context, MapsActivity::class.java)
+                        )
+                    }) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_map),
+                            contentDescription = "Lihat Peta"
+                        )
+                    }
+
+                    AnimatedButton(
+                        onClick = {
+                            authViewModel.logout()
+                            navController.navigate("login") {
+                                popUpTo("story_list") { inclusive = true }
+                            }
+                        },
+                        text = "Logout"
+                    )
                 }
-            }) {
-                Text("Logout")
+            )
+        },
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = { navController.navigate("add_story") }
+            ) {
+                Icon(imageVector = Icons.Default.Add, contentDescription = "Tambah Cerita")
             }
         }
-
-        // Tampilkan data berdasarkan state
-        when {
-            isLoading -> {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
-            }
-            !errorMessage.isNullOrEmpty() -> {
-                Text(
-                    text = errorMessage ?: "Terjadi kesalahan.",
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
-                )
-            }
-            else -> {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(stories) { story ->
-                        StoryCard(story)
+    ) { paddingValues ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+        ) {
+            LazyColumn(
+                state = listState,
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                contentPadding = PaddingValues(16.dp)
+            ) {
+                items(storyPagingItems.itemCount) { index ->
+                    val story = storyPagingItems[index]
+                    if (story != null) {
+                        StoryCard(
+                            story = story,
+                            onClick = {
+                                navController.navigate("story_detail/${story.id}")
+                            }
+                        )
                     }
                 }
+
+                when (val appendState = storyPagingItems.loadState.append) {
+                    is androidx.paging.LoadState.Loading -> {
+                        item {
+                            CircularProgressIndicator(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp)
+                                    .wrapContentWidth(Alignment.CenterHorizontally)
+                            )
+                        }
+                    }
+                    is androidx.paging.LoadState.Error -> {
+                        item {
+                            Text(
+                                text = "Error memuat data berikutnya: ${(appendState as androidx.paging.LoadState.Error).error.message}",
+                                color = MaterialTheme.colorScheme.error,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp)
+                            )
+                        }
+                    }
+                    else -> {}
+                }
             }
+
+            // Tambahkan indikator loading di tengah layar saat refresh
+            if (storyPagingItems.loadState.refresh is androidx.paging.LoadState.Loading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.align(Alignment.Center)
+                )
+            }
+
+            if (storyPagingItems.itemCount == 0 &&
+                storyPagingItems.loadState.refresh !is androidx.paging.LoadState.Loading &&
+                storyPagingItems.loadState.append !is androidx.paging.LoadState.Loading
+            ) {
+                Text(
+                    text = "Tidak ada cerita ditemukan.",
+                    modifier = Modifier.align(Alignment.Center)
+                )
+            }
+        }
+
+        LaunchedEffect(listState) {
+            snapshotFlow { listState.firstVisibleItemIndex }
+                .collect { firstVisibleItemIndex ->
+                    if (firstVisibleItemIndex == storyPagingItems.itemCount - 1) {
+                        // Jika sudah mencapai akhir daftar, tunggu pengguna scroll ulang untuk memuat data
+                        println("Pengguna di akhir daftar, tunggu scroll berikutnya untuk memuat data")
+                    }
+                }
         }
     }
 }
 
-@Composable
-fun StoryCard(story: Story) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(text = story.name, style = MaterialTheme.typography.titleMedium)
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(text = story.description, style = MaterialTheme.typography.bodySmall)
-            Spacer(modifier = Modifier.height(8.dp))
-            story.photoUrl?.let { photoUrl ->
-                AsyncImage(
-                    model = photoUrl,
-                    contentDescription = "Story Image",
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(200.dp)
-                )
-            }
-        }
-    }
-}
 
 
 

@@ -6,19 +6,18 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:padding="8dp">
 
-    <!-- Gambar Cerita -->
     <ImageView
         android:id="@+id/iv_item_photo"
-        android:layout_width="60dp"
-        android:layout_height="60dp"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
         android:scaleType="centerCrop"
+        android:transitionName="story_image"
         android:contentDescription="Story Photo"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         tools:src="@drawable/sample_photo" />
 
-    <!-- Nama User -->
     <TextView
         android:id="@+id/tv_item_name"
         android:layout_width="0dp"
@@ -34,7 +33,6 @@
         android:layout_marginStart="8dp"
         tools:text="John Doe" />
 
-    <!-- Deskripsi Singkat -->
     <TextView
         android:id="@+id/tv_item_description"
         android:layout_width="0dp"
