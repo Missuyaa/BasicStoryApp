@@ -46,7 +46,6 @@ android {
 }
 
 dependencies {
-    // Core dependencies
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -55,16 +54,13 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
-
-    // Additional libraries
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
     implementation("androidx.constraintlayout:constraintlayout-compose:1.0.1")
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.11.0")
     implementation("com.github.bumptech.glide:glide:4.12.0")
-    testImplementation(project(":app"))
-    testImplementation(project(":app"))
+    implementation(libs.androidx.runtime.livedata)
     androidTestImplementation(libs.androidx.core.testing)
     kapt("com.github.bumptech.glide:compiler:4.12.0")
     implementation("io.coil-kt:coil-compose:2.3.0")

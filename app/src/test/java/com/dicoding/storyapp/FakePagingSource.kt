@@ -17,6 +17,14 @@ class FakePagingSource(
 
     override suspend fun load(params: LoadParams<Int>): LoadResult<Int, Story> {
         return try {
+            if (data.isEmpty()) {
+                return LoadResult.Page(
+                    data = emptyList(),
+                    prevKey = null,
+                    nextKey = null
+                )
+            }
+
             val position = params.key ?: 1
             val start = (position - 1) * params.loadSize
             val end = (position * params.loadSize).coerceAtMost(data.size)
@@ -31,3 +39,4 @@ class FakePagingSource(
         }
     }
 }
+

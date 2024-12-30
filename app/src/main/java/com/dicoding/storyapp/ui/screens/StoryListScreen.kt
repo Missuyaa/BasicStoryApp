@@ -1,18 +1,14 @@
 package com.dicoding.storyapp.ui.screens
 
 import android.content.Intent
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -110,20 +106,25 @@ fun StoryListScreen(
                     }
                     is androidx.paging.LoadState.Error -> {
                         item {
-                            Text(
-                                text = "Error memuat data berikutnya: ${(appendState as androidx.paging.LoadState.Error).error.message}",
-                                color = MaterialTheme.colorScheme.error,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(16.dp)
-                            )
+                            Column(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(
+                                    text = "Gagal memuat data berikutnya.",
+                                    color = MaterialTheme.colorScheme.error,
+                                    modifier = Modifier.padding(8.dp)
+                                )
+                                Button(onClick = { storyPagingItems.retry() }) {
+                                    Text("Coba Lagi")
+                                }
+                            }
                         }
                     }
                     else -> {}
                 }
             }
 
-            // Tambahkan indikator loading di tengah layar saat refresh
             if (storyPagingItems.loadState.refresh is androidx.paging.LoadState.Loading) {
                 CircularProgressIndicator(
                     modifier = Modifier.align(Alignment.Center)
@@ -136,7 +137,8 @@ fun StoryListScreen(
             ) {
                 Text(
                     text = "Tidak ada cerita ditemukan.",
-                    modifier = Modifier.align(Alignment.Center)
+                    modifier = Modifier.align(Alignment.Center),
+                    color = Color.Gray
                 )
             }
         }
@@ -145,7 +147,6 @@ fun StoryListScreen(
             snapshotFlow { listState.firstVisibleItemIndex }
                 .collect { firstVisibleItemIndex ->
                     if (firstVisibleItemIndex == storyPagingItems.itemCount - 1) {
-                        // Jika sudah mencapai akhir daftar, tunggu pengguna scroll ulang untuk memuat data
                         println("Pengguna di akhir daftar, tunggu scroll berikutnya untuk memuat data")
                     }
                 }

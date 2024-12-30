@@ -15,10 +15,10 @@ import com.dicoding.storyapp.data.api.ApiClient
 import com.dicoding.storyapp.data.datastore.DataStoreManager
 import com.dicoding.storyapp.data.datastore.StoryPagingSource
 import com.dicoding.storyapp.data.model.Story
-import com.dicoding.storyapp.data.model.StoryResponse
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import okhttp3.MediaType.Companion.toMediaType
@@ -52,28 +52,28 @@ open class StoryViewModel(
     val isSuccess: StateFlow<Boolean> = _isSuccess
 
 
-    val storyPagingData = Pager(
-        config = PagingConfig(
-            pageSize = 10,
-            prefetchDistance = 1,
-            enablePlaceholders = false,
-            initialLoadSize = 10
-        ),
-        pagingSourceFactory = {
-            StoryPagingSource(apiService, token = runBlocking { getToken() ?: "" })
-        }
-    ).flow.cachedIn(viewModelScope)
+    private val _refreshTrigger = MutableStateFlow(false)
+    val storyPagingData = _refreshTrigger.flatMapLatest {
+        Pager(
+            config = PagingConfig(
+                pageSize = 10,
+                prefetchDistance = 1,
+                enablePlaceholders = false,
+                initialLoadSize = 10
+            ),
+            pagingSourceFactory = {
+                StoryPagingSource(apiService, token = runBlocking { getToken() ?: "" })
+            }
+        ).flow.cachedIn(viewModelScope)
+    }
 
     fun getStoriesWithLocation(): LiveData<List<Story>> = liveData {
         try {
             val token = getToken()
             if (token.isNullOrEmpty()) {
-                Log.e("StoryViewModel", "Token tidak ditemukan.")
                 emit(emptyList())
                 return@liveData
             }
-
-            Log.d("StoryViewModel", "Token dikirim: Bearer $token")
 
             val response = apiService.getStoriesWithLocation(
                 token = "Bearer $token",
@@ -81,17 +81,15 @@ open class StoryViewModel(
             )
 
             if (response.listStory.isNotEmpty()) {
-                Log.d("StoryViewModel", "Jumlah cerita dengan lokasi: ${response.listStory.size}")
                 emit(response.listStory)
             } else {
-                Log.d("StoryViewModel", "Tidak ada cerita dengan lokasi yang diterima.")
                 emit(emptyList())
             }
         } catch (e: Exception) {
-            Log.e("StoryViewModel", "Terjadi kesalahan: ${e.message}")
             emit(emptyList())
         }
     }
+
 
     init {
         viewModelScope.launch {
@@ -127,31 +125,25 @@ open class StoryViewModel(
             }
 
             try {
-                Log.d("StoryViewModel", "Fetching stories with token: $token")
                 val response = apiService.getStories("Bearer $token", page, size)
                 if (response.isSuccessful) {
                     val storyResponse = response.body()
                     if (storyResponse != null && !storyResponse.error) {
                         _stories.value = storyResponse.listStory
-                        Log.d("StoryViewModel", "Fetched stories: ${storyResponse.listStory.size}")
                         _errorMessage.value = null
                     } else {
                         _errorMessage.value = storyResponse?.message ?: "Gagal memuat cerita."
-                        Log.e("StoryViewModel", "Error: ${_errorMessage.value}")
                     }
                 } else {
                     _errorMessage.value = "Gagal memuat cerita: ${response.message()}"
-                    Log.e("StoryViewModel", "Error: ${response.message()}")
                 }
             } catch (e: Exception) {
                 _errorMessage.value = "Terjadi kesalahan: ${e.message}"
-                Log.e("StoryViewModel", "Exception: ${e.message}")
             } finally {
                 _isLoading.value = false
             }
         }
     }
-
 
     fun fetchStoryDetail(storyId: String) {
         viewModelScope.launch {
@@ -240,6 +232,10 @@ open class StoryViewModel(
                     _errorMessage.value = null
                     _isSuccess.value = true
                     onComplete(true)
+
+                    // **Memicu pemuatan ulang data**
+                    _refreshTrigger.value = !_refreshTrigger.value
+
                     Log.d("StoryViewModel", "Cerita berhasil diunggah.")
                 } else {
                     handleError("Gagal mengunggah cerita: ${response.message()}")

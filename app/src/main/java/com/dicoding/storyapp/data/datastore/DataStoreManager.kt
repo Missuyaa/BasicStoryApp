@@ -13,7 +13,7 @@ import java.io.IOException
 
 private val Context.dataStore by preferencesDataStore(name = "user_prefs")
 
-class DataStoreManager(private val context: Context) {
+class DataStoreManager(private val context: Context){
     companion object {
         private val TOKEN_KEY = stringPreferencesKey("token")
         private val IS_LOGGED_IN_KEY = booleanPreferencesKey("is_logged_in")

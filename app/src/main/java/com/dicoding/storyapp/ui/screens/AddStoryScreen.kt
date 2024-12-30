@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -24,10 +25,12 @@ fun AddStoryScreen(
     storyViewModel: StoryViewModel
 ) {
     var description by remember { mutableStateOf("") }
-    var latitude by remember { mutableStateOf("") } // Tambahkan input untuk latitude
-    var longitude by remember { mutableStateOf("") } // Tambahkan input untuk longitude
+    var latitude by remember { mutableStateOf("") }
+    var longitude by remember { mutableStateOf("") }
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    var useAutomaticLocation by remember { mutableStateOf(false) }
+
     val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent(),
         onResult = { uri ->
@@ -35,6 +38,17 @@ fun AddStoryScreen(
             errorMessage = if (uri == null) "Gagal memilih gambar" else null
         }
     )
+    val storiesWithLocation = storyViewModel.getStoriesWithLocation().observeAsState(emptyList())
+
+    LaunchedEffect(useAutomaticLocation) {
+        if (useAutomaticLocation) {
+
+            storiesWithLocation.value.firstOrNull()?.let { story ->
+                latitude = story.lat.toString()
+                longitude = story.lon.toString()
+            }
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -89,45 +103,13 @@ fun AddStoryScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Input untuk Latitude
-        BasicTextField(
-            value = latitude,
-            onValueChange = { latitude = it },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(50.dp)
-                .background(Color.LightGray)
-                .padding(8.dp),
-            decorationBox = { innerTextField ->
-                Box {
-                    if (latitude.isEmpty()) {
-                        Text("Masukkan Latitude", color = Color.Gray)
-                    }
-                    innerTextField()
-                }
-            }
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Input untuk Longitude
-        BasicTextField(
-            value = longitude,
-            onValueChange = { longitude = it },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(50.dp)
-                .background(Color.LightGray)
-                .padding(8.dp),
-            decorationBox = { innerTextField ->
-                Box {
-                    if (longitude.isEmpty()) {
-                        Text("Masukkan Longitude", color = Color.Gray)
-                    }
-                    innerTextField()
-                }
-            }
-        )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Checkbox(
+                checked = useAutomaticLocation,
+                onCheckedChange = { useAutomaticLocation = it }
+            )
+            Text(text = "Klik Di Sini Untuk Menambahkan Lokasi Otomatis")
+        }
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -145,11 +127,6 @@ fun AddStoryScreen(
 
                 val lat = latitude.toDoubleOrNull()
                 val lon = longitude.toDoubleOrNull()
-
-                if (lat == null || lon == null) {
-                    errorMessage = "Latitude dan Longitude harus berupa angka."
-                    return@AnimatedButton
-                }
 
                 selectedImageUri?.let { uri ->
                     storyViewModel.uploadStoryWithImage(
