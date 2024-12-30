@@ -4,8 +4,10 @@ import android.content.ContentResolver
 import android.content.Context
 import android.net.Uri
 import android.util.Log
+import androidx.annotation.VisibleForTesting
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.asLiveData
 import androidx.lifecycle.liveData
 import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
@@ -29,9 +31,9 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStream
 
-open class StoryViewModel(
-    private val dataStoreManager: DataStoreManager,
-    private val context: Context
+open class StoryViewModel @VisibleForTesting constructor(
+    private val dataStoreManager: DataStoreManager? = null,
+    private val context: Context? = null
 ) : ViewModel() {
 
     private val apiService = ApiClient.apiService
@@ -51,6 +53,7 @@ open class StoryViewModel(
     private val _isSuccess = MutableStateFlow(false)
     val isSuccess: StateFlow<Boolean> = _isSuccess
 
+    val storiesLiveData: LiveData<List<Story>> = _stories.asLiveData()
 
     private val _refreshTrigger = MutableStateFlow(false)
     val storyPagingData = _refreshTrigger.flatMapLatest {
@@ -93,7 +96,7 @@ open class StoryViewModel(
 
     init {
         viewModelScope.launch {
-            val token = dataStoreManager.getToken().firstOrNull()
+            val token = dataStoreManager?.getToken()?.firstOrNull()
             if (token.isNullOrEmpty()) {
                 Log.e("StoryViewModel", "Token tidak ditemukan. Harap login ulang.")
             } else {
@@ -110,7 +113,7 @@ open class StoryViewModel(
     }
 
     private suspend fun getToken(): String? {
-        return dataStoreManager.getToken().firstOrNull()
+        return dataStoreManager?.getToken()?.firstOrNull()
     }
 
     fun fetchStories(page: Int = 1, size: Int = 10) {
@@ -179,7 +182,7 @@ open class StoryViewModel(
     }
 
     private fun uriToFile(uri: Uri): File {
-        val contentResolver: ContentResolver = context.contentResolver
+        val contentResolver: ContentResolver = context?.contentResolver ?: throw IllegalStateException("Context tidak ditemukan.")
         val tempFile = File(context.cacheDir, "${System.currentTimeMillis()}.jpg")
         val inputStream: InputStream? = contentResolver.openInputStream(uri)
         val outputStream = FileOutputStream(tempFile)
@@ -248,6 +251,11 @@ open class StoryViewModel(
                 _isLoading.value = false
             }
         }
+    }
+
+    @VisibleForTesting
+    fun setStoriesForTesting(stories: List<Story>) {
+        _stories.value = stories
     }
 }
 
