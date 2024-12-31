@@ -6,6 +6,7 @@ import android.net.Uri
 import android.util.Log
 import androidx.annotation.VisibleForTesting
 import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.liveData
@@ -53,7 +54,8 @@ open class StoryViewModel @VisibleForTesting constructor(
     private val _isSuccess = MutableStateFlow(false)
     val isSuccess: StateFlow<Boolean> = _isSuccess
 
-    val storiesLiveData: LiveData<List<Story>> = _stories.asLiveData()
+    private val _storiesLiveData = MutableLiveData<List<Story>>()
+    val storiesLiveData: LiveData<List<Story>> = _storiesLiveData
 
     private val _refreshTrigger = MutableStateFlow(false)
     val storyPagingData = _refreshTrigger.flatMapLatest {
@@ -98,9 +100,9 @@ open class StoryViewModel @VisibleForTesting constructor(
         viewModelScope.launch {
             val token = dataStoreManager?.getToken()?.firstOrNull()
             if (token.isNullOrEmpty()) {
-                Log.e("StoryViewModel", "Token tidak ditemukan. Harap login ulang.")
+//                Log.e("StoryViewModel", "Token tidak ditemukan. Harap login ulang.")
             } else {
-                Log.d("StoryViewModel", "Token berhasil diambil: $token")
+//                Log.d("StoryViewModel", "Token berhasil diambil: $token")
             }
         }
     }
@@ -253,9 +255,8 @@ open class StoryViewModel @VisibleForTesting constructor(
         }
     }
 
-    @VisibleForTesting
     fun setStoriesForTesting(stories: List<Story>) {
-        _stories.value = stories
+        _storiesLiveData.value = stories
     }
 }
 
